@@ -2,6 +2,8 @@
 // X Construction — FAQ data for homepage FAQ section
 // ---------------------------------------------------------------------------
 
+import { COMPANY } from './constants';
+
 export interface FAQ {
   question: string;
   answer: string;
@@ -10,8 +12,7 @@ export interface FAQ {
 export const FAQS: FAQ[] = [
   {
     question: 'How do I get started with a project?',
-    answer:
-      'Getting started is simple. Fill out our contact form or call us at (800) 555-1234 to schedule a free consultation. We will visit your property, discuss your vision, provide a detailed estimate, and outline the project timeline.',
+    answer: `Getting started is simple. Fill out our contact form or call us at ${COMPANY.phone} to schedule a free consultation. We will visit your property, discuss your vision, provide a detailed estimate, and outline the project timeline.`,
   },
   {
     question: 'Are you licensed and insured?',

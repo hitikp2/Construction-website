@@ -16,6 +16,7 @@ import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import type { ServiceDetail } from '@/lib/service-data';
 import { SERVICE_DETAILS } from '@/lib/service-data';
+import { COMPANY, phoneHref } from '@/lib/constants';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -261,8 +262,8 @@ export default function ServiceDetailClient({
             <Button variant="primary" size="lg" href="/#contact">
               Get Free Quote
             </Button>
-            <Button variant="secondary" size="lg" href="tel:8005551234">
-              Call (800) 555-1234
+            <Button variant="secondary" size="lg" href={phoneHref(COMPANY.phone)}>
+              Call {COMPANY.phone}
             </Button>
           </div>
         </div>

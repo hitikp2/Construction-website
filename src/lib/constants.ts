@@ -52,6 +52,14 @@ export interface SocialLink {
   icon: string;
 }
 
+// ---- Helpers --------------------------------------------------------------
+
+export const phoneHref = (phone: string): string =>
+  'tel:+1' + phone.replace(/\D/g, '');
+
+export const smsHref = (phone: string): string =>
+  'sms:+1' + phone.replace(/\D/g, '');
+
 // ---- Data -----------------------------------------------------------------
 
 export const COMPANY: Company = {

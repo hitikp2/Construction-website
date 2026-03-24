@@ -17,24 +17,6 @@ interface VisionResult {
   total: number;
 }
 
-const DEMO_RESPONSE: VisionResult = {
-  room_type: 'Kitchen',
-  remodel_description:
-    'Complete kitchen remodel featuring new quartz countertops, custom shaker-style cabinets, stainless steel appliance package, subway tile backsplash, recessed LED lighting, and luxury vinyl plank flooring. Includes updated plumbing fixtures and electrical work to meet current California code.',
-  cost_items: [
-    { item: 'Custom Cabinetry & Installation', cost: 18500 },
-    { item: 'Quartz Countertops', cost: 7200 },
-    { item: 'Appliance Package (Stainless Steel)', cost: 8500 },
-    { item: 'Backsplash Tile & Installation', cost: 3200 },
-    { item: 'Flooring (LVP)', cost: 4800 },
-    { item: 'Plumbing & Fixtures', cost: 5500 },
-    { item: 'Electrical & Lighting', cost: 4200 },
-    { item: 'Demolition & Prep', cost: 3100 },
-    { item: 'Permits & Inspections', cost: 3500 },
-  ],
-  total: 58500,
-};
-
 const ANALYSIS_PROMPT = `Analyze this room photo and provide a remodel estimate. Return ONLY valid JSON with this exact structure: {"room_type": "string", "remodel_description": "string describing suggested remodel", "cost_items": [{"item": "string", "cost": number}], "total": number}. Be realistic with Southern California 2026 pricing.`;
 
 function extractJSON(text: string): VisionResult {
@@ -73,7 +55,10 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json(DEMO_RESPONSE);
+      return NextResponse.json(
+        { error: 'Vision analysis is currently being configured. Please use our calculator for estimates.' },
+        { status: 503 }
+      );
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {

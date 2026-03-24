@@ -22,11 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ errors }, { status: 400 });
     }
 
-    // In production, this would integrate with an email service (SendGrid,
-    // Resend, etc.) or a CRM (HubSpot, Salesforce, etc.) to forward the
-    // lead. For now we simply acknowledge receipt.
-
-    console.log('New contact form submission:', result.data);
+    console.log(`[${new Date().toISOString()}] Contact form submission:`, JSON.stringify(result.data));
 
     return NextResponse.json({
       success: true,

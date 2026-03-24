@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Eye, Send, Upload, RotateCcw, Loader2 } from 'lucide-react';
+import { Bot, Eye, Send, Upload, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { SectionHeader } from '../ui/SectionHeader';
 import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { COMPANY, phoneHref } from '@/lib/constants';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -28,56 +30,8 @@ interface VisionResult {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Demo data                                                          */
+/*  Constants                                                          */
 /* ------------------------------------------------------------------ */
-
-const KITCHEN_DEMO: VisionResult = {
-  room_type: 'Kitchen',
-  remodel_description:
-    'Modern open-concept kitchen with quartz countertops, custom cabinetry, and stainless steel appliances',
-  cost_items: [
-    { item: 'Custom Cabinetry', cost: 15000 },
-    { item: 'Quartz Countertops', cost: 8000 },
-    { item: 'Appliance Package', cost: 6500 },
-    { item: 'Flooring', cost: 4000 },
-    { item: 'Lighting & Electrical', cost: 3500 },
-    { item: 'Plumbing Fixtures', cost: 2500 },
-    { item: 'Backsplash & Tile', cost: 2000 },
-  ],
-  total: 41500,
-};
-
-const BATHROOM_DEMO: VisionResult = {
-  room_type: 'Bathroom',
-  remodel_description:
-    'Spa-inspired bathroom with walk-in rain shower, heated floors, double vanity, and premium porcelain tile throughout',
-  cost_items: [
-    { item: 'Walk-in Shower Build', cost: 7500 },
-    { item: 'Double Vanity & Countertop', cost: 5500 },
-    { item: 'Premium Tile & Installation', cost: 5000 },
-    { item: 'Heated Flooring System', cost: 3500 },
-    { item: 'Plumbing & Fixtures', cost: 3000 },
-    { item: 'Lighting & Electrical', cost: 2000 },
-    { item: 'Ventilation & Mirrors', cost: 1500 },
-  ],
-  total: 28000,
-};
-
-const LIVINGROOM_DEMO: VisionResult = {
-  room_type: 'Living Room',
-  remodel_description:
-    'Contemporary open-plan living room with built-in entertainment center, recessed lighting, hardwood flooring, and accent wall',
-  cost_items: [
-    { item: 'Hardwood Flooring', cost: 6500 },
-    { item: 'Built-in Entertainment Center', cost: 5000 },
-    { item: 'Accent Wall & Trim', cost: 3000 },
-    { item: 'Recessed Lighting', cost: 2500 },
-    { item: 'Painting & Finish', cost: 2000 },
-    { item: 'Crown Molding & Baseboards', cost: 1800 },
-    { item: 'Electrical & Smart Home', cost: 1200 },
-  ],
-  total: 22000,
-};
 
 const SUGGESTED_QUESTIONS = [
   'Kitchen pricing?',
@@ -129,12 +83,24 @@ const AIChat: React.FC = () => {
         body: JSON.stringify({ messages: updatedMessages }),
       });
 
-      if (!res.ok) throw new Error('Failed to get response');
-
       const data = await res.json();
+
+      if (!res.ok) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              data.error ||
+              `I'm having trouble connecting right now. Please call us at **${COMPANY.phone}** for immediate assistance.`,
+          },
+        ]);
+        return;
+      }
+
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: data.message ?? data.content ?? 'Sorry, I could not generate a response.' },
+        { role: 'assistant', content: data.message ?? 'Sorry, I could not generate a response.' },
       ]);
     } catch {
       setMessages((prev) => [
@@ -142,7 +108,7 @@ const AIChat: React.FC = () => {
         {
           role: 'assistant',
           content:
-            "I'm sorry, I'm having trouble connecting right now. Please try again or call us at **(800) 555-1234** for immediate assistance.",
+            `I'm sorry, I'm having trouble connecting right now. Please try again or call us at **${COMPANY.phone}** for immediate assistance.`,
         },
       ]);
     } finally {
@@ -253,6 +219,7 @@ const AIChat: React.FC = () => {
 const AIVision: React.FC = () => {
   const [result, setResult] = useState<VisionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -260,6 +227,7 @@ const AIVision: React.FC = () => {
     if (!file) return;
 
     setIsLoading(true);
+    setError(null);
 
     try {
       const reader = new FileReader();
@@ -274,11 +242,17 @@ const AIVision: React.FC = () => {
             body: JSON.stringify({ image: base64, mediaType }),
           });
 
-          if (!res.ok) throw new Error('Vision API failed');
-
           const data = await res.json();
-          setResult(data);
+
+          if (!res.ok) {
+            setError(data.error || 'Failed to analyze the image. Please try again.');
+            setResult(null);
+          } else {
+            setResult(data);
+            setError(null);
+          }
         } catch {
+          setError('Failed to connect to the analysis service. Please try again.');
           setResult(null);
         } finally {
           setIsLoading(false);
@@ -287,18 +261,15 @@ const AIVision: React.FC = () => {
       reader.readAsDataURL(file);
     } catch {
       setIsLoading(false);
+      setError('Failed to read the image file.');
     }
 
-    // Reset file input so same file can be uploaded again
     e.target.value = '';
-  };
-
-  const handleDemo = (demo: VisionResult) => {
-    setResult(demo);
   };
 
   const handleReset = () => {
     setResult(null);
+    setError(null);
   };
 
   return (
@@ -318,6 +289,25 @@ const AIVision: React.FC = () => {
           <div className="h-full flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-10 h-10 text-[#c8ff00] animate-spin" />
             <p className="text-[#a8a8a0] text-sm font-sans">Analyzing your space...</p>
+          </div>
+        ) : error ? (
+          /* Error state */
+          <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-4">
+            <AlertCircle className="w-10 h-10 text-[#a8a8a0]" />
+            <p className="text-[#a8a8a0] text-sm font-sans leading-relaxed">
+              {error}
+            </p>
+            <div className="flex flex-col gap-3 mt-2">
+              <Button variant="secondary" size="sm" href="/#calculator">
+                Use Price Calculator
+              </Button>
+              <button
+                onClick={handleReset}
+                className="text-[#c8ff00] text-sm font-sans hover:underline"
+              >
+                Try again
+              </button>
+            </div>
           </div>
         ) : result ? (
           /* Results panel */
@@ -351,15 +341,19 @@ const AIVision: React.FC = () => {
               </div>
             </div>
 
-            {/* Start Over button */}
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-2 mx-auto mt-2 px-5 py-2.5 rounded-xl bg-white/5 text-[#a8a8a0] hover:bg-white/10 hover:text-[#f0efe9] transition-colors text-sm font-sans"
-              aria-label="Start over"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Start Over
-            </button>
+            <div className="flex flex-col gap-3 mt-2">
+              <Button variant="primary" size="sm" href="/#contact">
+                Get Exact Quote
+              </Button>
+              <button
+                onClick={handleReset}
+                className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-xl bg-white/5 text-[#a8a8a0] hover:bg-white/10 hover:text-[#f0efe9] transition-colors text-sm font-sans"
+                aria-label="Start over"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Analyze Another Room
+              </button>
+            </div>
           </div>
         ) : (
           /* Upload zone */
@@ -391,32 +385,9 @@ const AIVision: React.FC = () => {
               />
             </div>
 
-            {/* Demo buttons */}
-            <div className="mt-4 space-y-2">
-              <p className="text-[#6a6a64] text-xs text-center font-sans uppercase tracking-wider">
-                Or try a demo
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleDemo(KITCHEN_DEMO)}
-                  className="flex-1 bg-white/5 rounded-xl px-3 py-2.5 text-sm text-[#a8a8a0] hover:bg-white/10 hover:text-[#f0efe9] transition-colors font-sans"
-                >
-                  Try Kitchen Demo
-                </button>
-                <button
-                  onClick={() => handleDemo(BATHROOM_DEMO)}
-                  className="flex-1 bg-white/5 rounded-xl px-3 py-2.5 text-sm text-[#a8a8a0] hover:bg-white/10 hover:text-[#f0efe9] transition-colors font-sans"
-                >
-                  Try Bathroom Demo
-                </button>
-                <button
-                  onClick={() => handleDemo(LIVINGROOM_DEMO)}
-                  className="flex-1 bg-white/5 rounded-xl px-3 py-2.5 text-sm text-[#a8a8a0] hover:bg-white/10 hover:text-[#f0efe9] transition-colors font-sans"
-                >
-                  Try Living Room Demo
-                </button>
-              </div>
-            </div>
+            <p className="mt-4 text-[#6a6a64] text-xs text-center font-sans">
+              Upload a photo of any room and our AI will provide a detailed remodel estimate
+            </p>
           </div>
         )}
       </div>

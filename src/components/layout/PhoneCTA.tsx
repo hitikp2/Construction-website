@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, MessageSquare } from 'lucide-react';
 import { useScrollPosition } from '@/hooks/useScrollPosition';
+import { COMPANY, phoneHref, smsHref } from '@/lib/constants';
 
 export const PhoneCTA = () => {
   const scrollY = useScrollPosition();
@@ -20,7 +21,7 @@ export const PhoneCTA = () => {
         >
           <div className="flex items-center justify-center gap-4">
             <a
-              href="tel:+18005551234"
+              href={phoneHref(COMPANY.phone)}
               className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-2 font-sans font-semibold text-[#c8ff00] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-lg"
               aria-label="Call Now"
             >
@@ -28,7 +29,7 @@ export const PhoneCTA = () => {
               Call Now
             </a>
             <a
-              href="sms:+18005551234"
+              href={smsHref(COMPANY.phone)}
               className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-2 font-sans font-semibold text-[#c8ff00] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-lg"
               aria-label="Text Us"
             >

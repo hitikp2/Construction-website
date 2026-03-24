@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { COMPANY } from '@/lib/constants';
 
-const SYSTEM_PROMPT = `You are a helpful construction assistant for X Construction, a premium construction and remodeling company serving Southern California (Los Angeles County, San Bernardino County, Orange County, Riverside County, Ventura County, and the Inland Empire). You have deep knowledge of: SoCal construction costs and pricing (2026 market rates), California building codes and permit requirements, ADU regulations (AB 1033, SB 9), remodeling timelines and best practices, material selection and quality tiers. Be friendly, professional, and concise. When discussing pricing, give realistic SoCal ranges. Always encourage clients to contact us for exact quotes. Our phone: (800) 555-1234.`;
+const SYSTEM_PROMPT = `You are a helpful construction assistant for ${COMPANY.name}, a premium construction and remodeling company serving Southern California (Los Angeles County, San Bernardino County, Orange County, Riverside County, Ventura County, and the Inland Empire). You have deep knowledge of: SoCal construction costs and pricing (2026 market rates), California building codes and permit requirements, ADU regulations (AB 1033, SB 9), remodeling timelines and best practices, material selection and quality tiers. Be friendly, professional, and concise. When discussing pricing, give realistic SoCal ranges. Always encourage clients to contact us for exact quotes. Our phone: ${COMPANY.phone}. Our email: ${COMPANY.email}.`;
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -22,10 +23,10 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({
-        message:
-          "I'm currently in demo mode. For real-time AI assistance, please contact us at (800) 555-1234.",
-      });
+      return NextResponse.json(
+        { error: `Our AI assistant is being configured. Please call us at ${COMPANY.phone} for immediate help.` },
+        { status: 503 }
+      );
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
 import { useScrollPosition } from '@/hooks/useScrollPosition';
 import { Button } from '@/components/ui/Button';
+import { COMPANY, phoneHref } from '@/lib/constants';
 
 const navLinks = [
   { label: 'Services', href: '#services' },
@@ -56,12 +57,12 @@ export const Navbar = () => {
           {/* Desktop Right */}
           <div className="hidden items-center gap-4 lg:flex">
             <a
-              href="tel:+18005551234"
+              href={phoneHref(COMPANY.phone)}
               className="flex items-center gap-2 font-sans text-sm text-[#a8a8a0] transition-colors duration-300 hover:text-[#c8ff00]"
-              aria-label="Call (800) 555-1234"
+              aria-label={`Call ${COMPANY.phone}`}
             >
               <Phone className="h-4 w-4" />
-              (800) 555-1234
+              {COMPANY.phone}
             </a>
             <Button variant="primary" size="sm" href="#contact">
               Free Quote
@@ -122,12 +123,12 @@ export const Navbar = () => {
                 className="mt-4 flex flex-col items-center gap-4"
               >
                 <a
-                  href="tel:+18005551234"
+                  href={phoneHref(COMPANY.phone)}
                   className="flex items-center gap-2 font-sans text-[#a8a8a0] transition-colors duration-300 hover:text-[#c8ff00]"
-                  aria-label="Call (800) 555-1234"
+                  aria-label={`Call ${COMPANY.phone}`}
                 >
                   <Phone className="h-4 w-4" />
-                  (800) 555-1234
+                  {COMPANY.phone}
                 </a>
                 <Button variant="primary" size="md" href="#contact" onClick={() => setMobileOpen(false)}>
                   Free Quote
