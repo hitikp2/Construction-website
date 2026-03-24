@@ -1,0 +1,40 @@
+import type { Metadata } from "next";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { PhoneCTA } from "@/components/layout/PhoneCTA";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "X Construction | Premier Home Remodeling in Southern California",
+  description:
+    "Southern California's trusted construction company. Full home remodels, custom ADUs, commercial projects, and more. Licensed, insured, and rated 4.9★. Get your free quote today.",
+  keywords: [
+    "construction",
+    "home remodeling",
+    "Southern California",
+    "ADU",
+    "general contractor",
+    "Los Angeles",
+    "Orange County",
+  ],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className="h-full antialiased"
+    >
+      <body className="min-h-full flex flex-col bg-[#0a0a0a] text-[#f0efe9] font-sans">
+        <Navbar />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <PhoneCTA />
+      </body>
+    </html>
+  );
+}
