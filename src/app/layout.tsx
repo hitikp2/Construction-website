@@ -17,6 +17,25 @@ export const metadata: Metadata = {
     "Los Angeles",
     "Orange County",
   ],
+  openGraph: {
+    title: "X Construction | Premier Home Remodeling in Southern California",
+    description:
+      "Southern California's trusted construction company. Full home remodels, custom ADUs, commercial projects, and more. Licensed, insured, rated 4.9★.",
+    url: "https://xconstruction.com",
+    siteName: "X Construction",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "X Construction | Premier Home Remodeling in Southern California",
+    description:
+      "Southern California's trusted construction company. Licensed, insured, rated 4.9★.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

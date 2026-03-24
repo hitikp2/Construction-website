@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
   Hammer,
   Home,
@@ -72,30 +73,33 @@ const Services: React.FC = () => {
 
             return (
               <motion.div key={service.id} variants={cardVariants}>
-                <Card className="group h-full flex flex-col cursor-pointer">
-                  {/* Icon */}
-                  <div className="mb-4">
-                    {Icon && <Icon size={32} className="text-[#c8ff00]" />}
-                  </div>
+                <Link href={`/services/${service.id}`}>
+                  <Card className="group h-full flex flex-col cursor-pointer">
+                    {/* Icon */}
+                    <div className="mb-4">
+                      {Icon && <Icon size={32} className="text-[#c8ff00]" />}
+                    </div>
 
-                  {/* Title */}
-                  <h3 className="text-xl font-semibold text-[#f0efe9] font-sans">
-                    {service.title}
-                  </h3>
+                    {/* Title */}
+                    <h3 className="text-xl font-semibold text-[#f0efe9] font-sans">
+                      {service.title}
+                    </h3>
 
-                  {/* Description */}
-                  <p className="mt-2 text-[#a8a8a0] font-sans text-sm leading-relaxed flex-1">
-                    {service.description}
-                  </p>
+                    {/* Description */}
+                    <p className="mt-2 text-[#a8a8a0] font-sans text-sm leading-relaxed flex-1">
+                      {service.description}
+                    </p>
 
-                  {/* Arrow */}
-                  <div className="mt-4 flex items-center">
-                    <ArrowRight
-                      size={20}
-                      className="text-[#c8ff00] opacity-0 group-hover:opacity-100 transition-opacity duration-300 -translate-x-2 group-hover:translate-x-0 transform"
-                    />
-                  </div>
-                </Card>
+                    {/* Arrow */}
+                    <div className="mt-4 flex items-center gap-2 text-[#c8ff00] text-sm font-sans">
+                      Learn more
+                      <ArrowRight
+                        size={16}
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0 transform"
+                      />
+                    </div>
+                  </Card>
+                </Link>
               </motion.div>
             );
           })}

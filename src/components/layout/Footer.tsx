@@ -1,32 +1,33 @@
 import React from 'react';
+import Link from 'next/link';
 
 const services = [
-  'Full Home Remodel',
-  'Custom ADU',
-  'Painting',
-  'Commercial Build-Outs',
-  'Room Additions',
-  'Outdoor Living',
-  'Electrical & Plumbing',
-  'Windows, Doors & Roofing',
-  'Architectural Design & Permits',
+  { label: 'Full Home Remodel', slug: 'full-home-remodel' },
+  { label: 'Custom ADU', slug: 'custom-adu' },
+  { label: 'Painting', slug: 'painting' },
+  { label: 'Commercial Build-Outs', slug: 'commercial-build-outs' },
+  { label: 'Room Additions', slug: 'room-additions' },
+  { label: 'Outdoor Living', slug: 'outdoor-living' },
+  { label: 'Electrical & Plumbing', slug: 'electrical-plumbing' },
+  { label: 'Windows, Doors & Roofing', slug: 'windows-doors-roofing' },
+  { label: 'Architectural Design & Permits', slug: 'architectural-design-permits' },
 ];
 
 const serviceAreas = [
-  'Los Angeles County',
-  'San Bernardino County',
-  'Orange County',
-  'Riverside County',
-  'Ventura County',
-  'Inland Empire',
+  { label: 'Los Angeles County', slug: 'los-angeles' },
+  { label: 'San Bernardino County', slug: 'san-bernardino' },
+  { label: 'Orange County', slug: 'orange-county' },
+  { label: 'Riverside County', slug: 'riverside' },
+  { label: 'Ventura County', slug: 'ventura' },
+  { label: 'Inland Empire', slug: 'inland-empire' },
 ];
 
 const companyLinks = [
-  { label: 'About', href: '#about' },
-  { label: 'Blog', href: '#blog' },
-  { label: 'Contact', href: '#contact' },
-  { label: 'Privacy Policy', href: '#privacy' },
-  { label: 'Terms of Service', href: '#terms' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Contact', href: '/#contact' },
+  { label: 'Calculator', href: '/#calculator' },
+  { label: 'AI Tools', href: '/#ai-tools' },
+  { label: 'FAQ', href: '/#faq' },
 ];
 
 const socialIcons = ['Facebook', 'Instagram', 'LinkedIn', 'Yelp'];
@@ -40,10 +41,12 @@ export const Footer = () => {
           {/* Column 1 - Brand */}
           <div>
             <div className="mb-4 flex items-baseline gap-1">
-              <span className="font-serif text-2xl font-bold text-[#f0efe9]">X</span>
-              <span className="font-sans text-xs tracking-[0.2em] text-[#a8a8a0]">
-                CONSTRUCTION
-              </span>
+              <Link href="/" className="flex items-baseline gap-1">
+                <span className="font-serif text-2xl font-bold text-[#f0efe9]">X</span>
+                <span className="font-sans text-xs tracking-[0.2em] text-[#a8a8a0]">
+                  CONSTRUCTION
+                </span>
+              </Link>
             </div>
             <p className="mb-6 font-sans text-sm leading-relaxed text-[#a8a8a0]">
               Premium construction &amp; remodeling serving all of Southern California.
@@ -69,13 +72,13 @@ export const Footer = () => {
             </h4>
             <ul className="flex flex-col gap-2">
               {services.map((service) => (
-                <li key={service}>
-                  <a
-                    href="#services"
+                <li key={service.slug}>
+                  <Link
+                    href={`/services/${service.slug}`}
                     className="font-sans text-sm text-[#a8a8a0] transition-colors duration-300 hover:text-[#c8ff00]"
                   >
-                    {service}
-                  </a>
+                    {service.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -88,13 +91,13 @@ export const Footer = () => {
             </h4>
             <ul className="flex flex-col gap-2">
               {serviceAreas.map((area) => (
-                <li key={area}>
-                  <a
-                    href="#areas"
+                <li key={area.slug}>
+                  <Link
+                    href={`/areas/${area.slug}`}
                     className="font-sans text-sm text-[#a8a8a0] transition-colors duration-300 hover:text-[#c8ff00]"
                   >
-                    {area}
-                  </a>
+                    {area.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -108,12 +111,12 @@ export const Footer = () => {
             <ul className="flex flex-col gap-2">
               {companyLinks.map((link) => (
                 <li key={link.label}>
-                  <a
+                  <Link
                     href={link.href}
                     className="font-sans text-sm text-[#a8a8a0] transition-colors duration-300 hover:text-[#c8ff00]"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
