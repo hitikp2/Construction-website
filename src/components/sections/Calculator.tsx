@@ -103,9 +103,9 @@ const Calculator: React.FC = () => {
     <section id="calculator" className="py-24 px-6 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
         <SectionHeader
-          label="Estimate"
-          title="Instant Price Calculator"
-          subtitle="Get a ballpark estimate for your project in seconds"
+          label="Pricing"
+          title="Instant Project Estimator"
+          subtitle="Ballpark estimate in 30 seconds — based on real SoCal project data. For an exact guaranteed quote, we'll schedule a free on-site visit."
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

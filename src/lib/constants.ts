@@ -20,8 +20,10 @@ export interface NavLink {
 export interface Service {
   id: string;
   icon: string;
+  emoji: string;
   title: string;
   description: string;
+  startingPrice: string;
 }
 
 export interface ServiceArea {
@@ -84,65 +86,83 @@ export const SERVICES: Service[] = [
   {
     id: "full-home-remodel",
     icon: "Hammer",
-    title: "Full Home Remodel",
+    emoji: "\u{1F3E0}",
+    title: "Full Home Remodeling",
     description:
-      "Complete interior and exterior transformations that reimagine your living space from the ground up. Structural changes, new layouts, premium finishes — every detail executed flawlessly.",
+      "Complete interior/exterior home transformations \u2014 kitchens, bathrooms, living spaces, flooring, and more.",
+    startingPrice: "From $150/sqft",
   },
   {
     id: "custom-adu",
     icon: "Home",
+    emoji: "\u{1F3D7}\uFE0F",
     title: "Custom ADU",
     description:
-      "Accessory dwelling units designed and built to maximize your property value. Fully permitted, code-compliant guest houses, rental units, and in-law suites tailored to SoCal regulations.",
+      "Accessory dwelling units designed and built to maximize your property value. Fully permitted and code-compliant.",
+    startingPrice: "From $175/sqft",
   },
   {
     id: "painting",
     icon: "Paintbrush",
+    emoji: "\u{1F3A8}",
     title: "Painting",
     description:
-      "Interior and exterior painting services using top-tier coatings engineered for the Southern California climate. Meticulous prep, clean lines, and lasting color.",
+      "Interior and exterior painting using top-tier coatings engineered for the Southern California climate.",
+    startingPrice: "From $3/sqft",
   },
   {
     id: "commercial-build-outs",
     icon: "Building2",
+    emoji: "\u{1F3E2}",
     title: "Commercial Build-Outs",
     description:
-      "Tenant improvements, retail fit-outs, and office renovations built to spec and on schedule. We work around your business hours to minimize downtime.",
+      "Tenant improvements, retail fit-outs, and office renovations built to spec and on schedule.",
+    startingPrice: "From $120/sqft",
   },
   {
     id: "room-additions",
     icon: "PlusSquare",
+    emoji: "\u{1F4D0}",
     title: "Room Additions",
     description:
-      "Expand your living space with seamlessly integrated room additions. From sunrooms to second stories, we handle permits, engineering, and construction start to finish.",
+      "Expand your living space with seamlessly integrated room additions \u2014 from sunrooms to second stories.",
+    startingPrice: "From $200/sqft",
   },
   {
     id: "outdoor-living",
     icon: "TreePine",
+    emoji: "\u{1F334}",
     title: "Outdoor Living",
     description:
-      "Patios, outdoor kitchens, pergolas, fire features, and landscape hardscaping that turn your backyard into a year-round SoCal retreat.",
+      "Patios, outdoor kitchens, pergolas, fire features, and landscape hardscaping for year-round SoCal living.",
+    startingPrice: "From $50/sqft",
   },
   {
     id: "electrical-plumbing",
     icon: "Zap",
+    emoji: "\u26A1",
     title: "Electrical & Plumbing",
     description:
-      "Licensed electrical and plumbing work for remodels, upgrades, and new installations. Panel upgrades, EV charger wiring, re-piping, and fixture replacements.",
+      "Licensed electrical and plumbing work \u2014 panel upgrades, EV charger wiring, re-piping, and fixture replacements.",
+    startingPrice: "From $85/hr",
   },
   {
     id: "windows-doors-roofing",
     icon: "DoorOpen",
+    emoji: "\u{1FA9F}",
     title: "Windows, Doors & Roofing",
     description:
-      "Energy-efficient window and door replacements, complete roof tear-offs, and re-roofing with materials rated for Southern California sun and Santa Ana winds.",
+      "Energy-efficient window and door replacements, complete roof tear-offs, and re-roofing for SoCal climate.",
+    startingPrice: "From $8,000",
   },
   {
     id: "architectural-design-permits",
     icon: "Compass",
+    emoji: "\u{1F4D0}",
     title: "Architectural Design & Permits",
     description:
-      "In-house design and permit expediting across all SoCal counties. We navigate local codes, HOA requirements, and coastal commissions so your project never stalls.",
+      "In-house design and permit expediting across all SoCal counties. We navigate local codes and HOA requirements.",
+    startingPrice: "From $5,000",
   },
 ];
 

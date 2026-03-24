@@ -3,34 +3,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import {
-  Hammer,
-  Home,
-  Paintbrush,
-  Building2,
-  PlusSquare,
-  TreePine,
-  Zap,
-  DoorOpen,
-  Compass,
-  ArrowRight,
-  LucideIcon,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { Card } from '@/components/ui/Card';
 import { SERVICES } from '@/lib/constants';
-
-const iconMap: Record<string, LucideIcon> = {
-  Hammer,
-  Home,
-  Paintbrush,
-  Building2,
-  PlusSquare,
-  TreePine,
-  Zap,
-  DoorOpen,
-  Compass,
-};
 
 const gridVariants = {
   hidden: { opacity: 0 },
@@ -57,8 +32,8 @@ const Services: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <SectionHeader
           label="What We Do"
-          title="Our Services"
-          subtitle="Comprehensive construction solutions for residential and commercial projects across Southern California."
+          title="Full-Service Construction & Remodeling"
+          subtitle="Published pricing. No hidden fees. Every quote is all-inclusive — if the scope doesn't change, neither does the price."
         />
 
         <motion.div
@@ -68,41 +43,38 @@ const Services: React.FC = () => {
           whileInView="visible"
           viewport={{ once: true, margin: '-80px' }}
         >
-          {SERVICES.map((service) => {
-            const Icon = iconMap[service.icon];
+          {SERVICES.map((service) => (
+            <motion.div key={service.id} variants={cardVariants}>
+              <Link href={`/services/${service.id}`}>
+                <div className="group h-full flex flex-col bg-[#161616] border border-white/5 rounded-[20px] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#c8ff00]/20 hover:shadow-[0_8px_30px_rgba(200,255,0,0.1)] cursor-pointer">
+                  {/* Emoji icon */}
+                  <div className="mb-4 w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 text-2xl">
+                    {service.emoji}
+                  </div>
 
-            return (
-              <motion.div key={service.id} variants={cardVariants}>
-                <Link href={`/services/${service.id}`}>
-                  <Card className="group h-full flex flex-col cursor-pointer">
-                    {/* Icon */}
-                    <div className="mb-4">
-                      {Icon && <Icon size={32} className="text-[#c8ff00]" />}
+                  {/* Title */}
+                  <h3 className="text-xl font-semibold text-[#f0efe9] font-sans">
+                    {service.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="mt-2 text-[#a8a8a0] font-sans text-sm leading-relaxed flex-1">
+                    {service.description}
+                  </p>
+
+                  {/* Price + Arrow row */}
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[#c8ff00] font-mono">
+                      {service.startingPrice}
+                    </span>
+                    <div className="w-9 h-9 flex items-center justify-center rounded-full border border-[#c8ff00]/30 bg-[#c8ff00]/10 text-[#c8ff00] transition-all duration-300 group-hover:bg-[#c8ff00] group-hover:text-black">
+                      <ArrowRight className="w-4 h-4" />
                     </div>
-
-                    {/* Title */}
-                    <h3 className="text-xl font-semibold text-[#f0efe9] font-sans">
-                      {service.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="mt-2 text-[#a8a8a0] font-sans text-sm leading-relaxed flex-1">
-                      {service.description}
-                    </p>
-
-                    {/* Arrow */}
-                    <div className="mt-4 flex items-center gap-2 text-[#c8ff00] text-sm font-sans">
-                      Learn more
-                      <ArrowRight
-                        size={16}
-                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0 transform"
-                      />
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
-            );
-          })}
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
         </motion.div>
       </div>
     </section>

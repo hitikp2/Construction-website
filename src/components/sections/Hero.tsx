@@ -2,29 +2,14 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Phone, Star } from 'lucide-react';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Button } from '@/components/ui/Button';
+import { COMPANY, phoneHref } from '@/lib/constants';
 
-const floatingCards = [
-  {
-    title: 'Hollywood Hills Remodel',
-    location: 'Los Angeles, CA',
-    gradient: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-    className: 'top-[15%] right-[8%] animate-float',
-  },
-  {
-    title: 'Modern Detached ADU',
-    location: 'Irvine, CA',
-    gradient: 'linear-gradient(135deg, #0a3d2e 0%, #145a3e 50%, #1e7a50 100%)',
-    className: 'top-[45%] right-[2%] animate-float-delayed',
-  },
-  {
-    title: 'Resort-Style Outdoor Kitchen',
-    location: 'Corona, CA',
-    gradient: 'linear-gradient(135deg, #3e2a0a 0%, #5c3d10 50%, #7a5018 100%)',
-    className: 'bottom-[20%] right-[12%] animate-float-slow',
-  },
-];
+/* ------------------------------------------------------------------ */
+/*  Animation variants                                                 */
+/* ------------------------------------------------------------------ */
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -46,6 +31,21 @@ const itemVariants = {
   },
 };
 
+/* ------------------------------------------------------------------ */
+/*  Review ratings data                                                */
+/* ------------------------------------------------------------------ */
+
+const reviewPlatforms = [
+  { name: 'Google', rating: '4.9', count: 127 },
+  { name: 'Yelp', rating: '5.0', count: 43 },
+  { name: 'BBB', rating: 'A+', count: null },
+  { name: 'Houzz', rating: '4.8', count: 89 },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+
 const Hero: React.FC = () => {
   return (
     <section
@@ -60,104 +60,129 @@ const Hero: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left — Text content */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Accent badge */}
-            <motion.div variants={itemVariants} className="mb-6">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 text-sm font-sans text-[#a8a8a0]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8ff00] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c8ff00]" />
-                </span>
-                Premium Construction Services
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="max-w-3xl"
+        >
+          {/* Booking badge */}
+          <motion.div variants={itemVariants} className="mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 text-sm font-sans text-[#a8a8a0]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8ff00] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c8ff00]" />
               </span>
-            </motion.div>
-
-            {/* Headline */}
-            <motion.h1
-              variants={itemVariants}
-              className="text-5xl md:text-7xl font-bold font-serif text-[#f0efe9] leading-[1.1] tracking-tight"
-            >
-              Building SoCal&apos;s{' '}
-              <span className="text-[#c8ff00]">Future</span>, Today
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              variants={itemVariants}
-              className="mt-6 text-xl text-[#a8a8a0] font-sans max-w-xl leading-relaxed"
-            >
-              From custom ADUs to full-scale remodels, we deliver exceptional
-              craftsmanship across Southern California.
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              variants={itemVariants}
-              className="mt-8 flex flex-wrap gap-4"
-            >
-              <Button variant="primary" size="lg" href="#contact" aria-label="Get a free quote">
-                Get Free Quote
-              </Button>
-              <Button variant="secondary" size="lg" href="#portfolio" aria-label="View our work">
-                View Our Work
-              </Button>
-            </motion.div>
-
-            {/* Stats row */}
-            <motion.div
-              variants={itemVariants}
-              className="mt-14 grid grid-cols-3 gap-8"
-            >
-              <div>
-                <AnimatedCounter target={500} suffix="+" />
-                <p className="mt-2 text-sm text-[#a8a8a0] font-sans">
-                  Projects Completed
-                </p>
-              </div>
-              <div>
-                <AnimatedCounter target={15} suffix="+" />
-                <p className="mt-2 text-sm text-[#a8a8a0] font-sans">
-                  Years Experience
-                </p>
-              </div>
-              <div>
-                <AnimatedCounter target={4.9} suffix="★" />
-                <p className="mt-2 text-sm text-[#a8a8a0] font-sans">
-                  Client Rating
-                </p>
-              </div>
-            </motion.div>
+              Now Booking &mdash; Spring &amp; Summer 2026
+            </span>
           </motion.div>
 
-          {/* Right — Floating cards (desktop only) */}
-          <div className="hidden lg:block relative h-[600px]">
-            {floatingCards.map((card) => (
+          {/* Headline */}
+          <motion.h1
+            variants={itemVariants}
+            className="text-5xl md:text-7xl font-bold font-serif text-[#f0efe9] leading-[1.1] tracking-tight"
+          >
+            Building SoCal&apos;s{' '}
+            <br className="hidden md:block" />
+            <span className="text-[#c8ff00] italic">Future, Today.</span>
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            variants={itemVariants}
+            className="mt-6 text-lg md:text-xl text-[#a8a8a0] font-sans max-w-2xl leading-relaxed"
+          >
+            From full-home remodels and custom ADUs to commercial build-outs
+            &mdash; AI-powered precision meets decades of craftsmanship across
+            Los Angeles, San Bernardino, Orange County, and beyond.
+          </motion.p>
+
+          {/* Review ratings bar */}
+          <motion.div
+            variants={itemVariants}
+            className="mt-8 flex flex-wrap gap-x-6 gap-y-3"
+          >
+            {reviewPlatforms.map((platform) => (
               <div
-                key={card.title}
-                className={`absolute w-64 ${card.className}`}
+                key={platform.name}
+                className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-4 py-2.5"
               >
-                <div
-                  className="rounded-[20px] border border-white/5 p-5 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
-                  style={{ background: card.gradient }}
-                >
-                  <div className="h-28 rounded-[12px] bg-white/5 mb-4" />
-                  <h3 className="text-[#f0efe9] font-semibold font-sans text-sm">
-                    {card.title}
-                  </h3>
-                  <p className="text-[#6a6a64] text-xs font-sans mt-1">
-                    {card.location}
-                  </p>
+                <span className="text-sm text-[#a8a8a0] font-sans font-medium">
+                  {platform.name}
+                </span>
+                <div className="flex items-center gap-1">
+                  {/* Stars */}
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-3.5 h-3.5 fill-[#c8ff00] text-[#c8ff00]"
+                    />
+                  ))}
                 </div>
+                <span className="text-sm font-bold text-[#f0efe9] font-sans">
+                  {platform.rating}
+                </span>
+                {platform.count && (
+                  <span className="text-xs text-[#6a6a64] font-sans">
+                    ({platform.count})
+                  </span>
+                )}
               </div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+
+          {/* CTA Buttons */}
+          <motion.div
+            variants={itemVariants}
+            className="mt-8 flex flex-wrap gap-4"
+          >
+            <Button variant="primary" size="lg" href="#calculator" aria-label="Get instant estimate">
+              Get Instant Estimate &rarr;
+            </Button>
+            <Button variant="secondary" size="lg" href="#ai-tools" aria-label="Try AI Visualizer">
+              Try AI Visualizer
+            </Button>
+            <a
+              href={phoneHref(COMPANY.phone)}
+              className="inline-flex items-center gap-2 rounded-[12px] border border-white/20 px-6 py-3.5 font-sans text-sm text-white transition-all duration-300 hover:-translate-y-[2px] hover:border-[#c8ff00] hover:text-[#c8ff00]"
+              aria-label="Call now"
+            >
+              <Phone className="w-4 h-4" />
+              Call Now
+            </a>
+          </motion.div>
+
+          {/* Stats strip */}
+          <motion.div
+            variants={itemVariants}
+            className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8"
+          >
+            <div>
+              <AnimatedCounter target={523} />
+              <p className="mt-2 text-xs uppercase tracking-widest text-[#a8a8a0] font-sans">
+                Projects Completed
+              </p>
+            </div>
+            <div>
+              <AnimatedCounter target={47} prefix="$" suffix="M+" />
+              <p className="mt-2 text-xs uppercase tracking-widest text-[#a8a8a0] font-sans">
+                Total Project Value
+              </p>
+            </div>
+            <div>
+              <AnimatedCounter target={15} suffix="+" />
+              <p className="mt-2 text-xs uppercase tracking-widest text-[#a8a8a0] font-sans">
+                Years Licensed
+              </p>
+            </div>
+            <div>
+              <AnimatedCounter target={98} suffix="%" />
+              <p className="mt-2 text-xs uppercase tracking-widest text-[#a8a8a0] font-sans">
+                On-Time Delivery
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );
