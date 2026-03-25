@@ -625,12 +625,14 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
     ctx.fillText(COMPANY.phone, 0, 50);
     ctx.restore();
 
-    // Convert to blob and open in new tab — user can long-press to save on mobile
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    }, 'image/png');
+    // Direct download as PNG — works on all mobile browsers
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `remodel-estimate-${result.room_type.toLowerCase().replace(/\s+/g, '-')}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }, [result, beforeSrc, afterSrc, userVision]);
 
   if (!open) return null;
