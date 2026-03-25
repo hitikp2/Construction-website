@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Eye, Send, Upload, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
+import { Bot, Eye, Send, Upload, RotateCcw, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { SectionHeader } from '../ui/SectionHeader';
 import { Card } from '../ui/Card';
@@ -224,6 +224,8 @@ const AIVision: React.FC = () => {
   const [result, setResult] = useState<VisionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<{ data: string; mimeType: string } | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -271,9 +273,37 @@ const AIVision: React.FC = () => {
     e.target.value = '';
   };
 
+  const handleGenerateImage = async () => {
+    if (!result) return;
+    setIsGenerating(true);
+
+    try {
+      const prompt = `${result.room_type} remodel: ${result.remodel_description}. Items: ${result.cost_items.map(c => c.item).join(', ')}.`;
+      const res = await fetch('/api/visualize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to generate visualization.');
+      } else {
+        setGeneratedImage({ data: data.image, mimeType: data.mimeType });
+      }
+    } catch {
+      setError('Failed to connect to the image generation service.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleReset = () => {
     setResult(null);
     setError(null);
+    setGeneratedImage(null);
+    setIsGenerating(false);
   };
 
   return (
@@ -344,6 +374,38 @@ const AIVision: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Generated image or generate button */}
+            {generatedImage ? (
+              <div className="rounded-xl overflow-hidden border border-white/5">
+                <img
+                  src={`data:${generatedImage.mimeType};base64,${generatedImage.data}`}
+                  alt="AI-generated remodel visualization"
+                  className="w-full h-auto"
+                />
+                <div className="px-3 py-2 bg-white/[0.02] text-center">
+                  <p className="text-[#6a6a64] text-xs font-sans">AI-generated visualization of your remodel</p>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleGenerateImage}
+                disabled={isGenerating}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#c8ff00]/10 border border-[#c8ff00]/20 text-[#c8ff00] text-sm font-semibold font-sans hover:bg-[#c8ff00]/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating visualization...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Visualize This Remodel
+                  </>
+                )}
+              </button>
+            )}
 
             <div className="flex flex-col gap-3 mt-2">
               <Button variant="primary" size="sm" href="/#contact">
