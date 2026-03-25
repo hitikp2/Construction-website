@@ -278,7 +278,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Rancho Cucamonga, CA",
     price: "$245,000",
     gradient: "linear-gradient(135deg, #0a2a3e 0%, #103e5c 50%, #18527a 100%)",
-    image: "https://images.unsplash.com/photo-1600573472556-e636c2acda9e?w=800&q=80",
+    image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80",
   },
   {
     id: "newport-beach-retail",
@@ -296,7 +296,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Thousand Oaks, CA",
     price: "$62,000",
     gradient: "linear-gradient(135deg, #1a2e0a 0%, #2e4a10 50%, #3e6218 100%)",
-    image: "https://images.unsplash.com/photo-1600566753086-00f18f6b8067?w=800&q=80",
+    image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
   },
 ];
 
