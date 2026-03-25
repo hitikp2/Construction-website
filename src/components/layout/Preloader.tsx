@@ -7,6 +7,12 @@ export const Preloader = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Disable browser scroll restoration and scroll to top on page load
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
