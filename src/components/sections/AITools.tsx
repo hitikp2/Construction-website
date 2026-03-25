@@ -380,8 +380,6 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  const [saveImageUrl, setSaveImageUrl] = useState<string | null>(null);
-
   const handleDownload = useCallback(async () => {
     const W = 1080;
     const PAD = 48;
@@ -627,9 +625,12 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
     ctx.fillText(COMPANY.phone, 0, 50);
     ctx.restore();
 
-    // Convert to image URL and show overlay
-    const dataUrl = canvas.toDataURL('image/png');
-    setSaveImageUrl(dataUrl);
+    // Convert to blob and open in new tab — user can long-press to save on mobile
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    }, 'image/png');
   }, [result, beforeSrc, afterSrc, userVision]);
 
   if (!open) return null;
@@ -724,7 +725,7 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
               className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-[#f0efe9] text-sm font-semibold font-sans hover:bg-white/5 transition-colors"
             >
               <Download className="w-4 h-4" />
-              Save Estimate
+              Save Estimate as Image
             </button>
             <Button variant="primary" size="sm" href="/#contact">
               Get Exact Quote
@@ -739,58 +740,6 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
         </div>
       </div>
 
-      {/* Save Image Popup */}
-      {saveImageUrl && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
-          onClick={() => setSaveImageUrl(null)}
-        >
-          <div
-            className="relative w-full max-w-md bg-[#0e0e0e] border border-white/10 rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.9)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Popup header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <p className="text-[#f0efe9] text-sm font-semibold font-sans">Your Estimate is Ready</p>
-              <button
-                onClick={() => setSaveImageUrl(null)}
-                className="p-1.5 rounded-lg text-[#6a6a64] hover:text-white hover:bg-white/5 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Instructions */}
-            <div className="px-4 py-3 bg-[#c8ff00]/5 border-b border-[#c8ff00]/10">
-              <p className="text-[#c8ff00] text-xs font-semibold font-sans mb-1">How to save:</p>
-              <p className="text-[#a8a8a0] text-xs font-sans leading-relaxed">
-                <strong className="text-[#f0efe9]">iPhone/iPad:</strong> Press and hold the image → tap &quot;Add to Photos&quot;<br />
-                <strong className="text-[#f0efe9]">Android:</strong> Press and hold → tap &quot;Download image&quot;<br />
-                <strong className="text-[#f0efe9]">Desktop:</strong> Right-click → &quot;Save image as...&quot;
-              </p>
-            </div>
-
-            {/* Scrollable image */}
-            <div className="max-h-[60vh] overflow-y-auto no-scrollbar">
-              <img
-                src={saveImageUrl}
-                alt="Remodel estimate — hold to save"
-                className="w-full h-auto"
-              />
-            </div>
-
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-white/5 flex gap-2">
-              <button
-                onClick={() => setSaveImageUrl(null)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 text-[#a8a8a0] text-sm font-semibold font-sans hover:bg-white/10 transition-colors"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
