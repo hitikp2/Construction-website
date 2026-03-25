@@ -2,6 +2,7 @@ import Hero from "@/components/sections/Hero";
 import Services from "@/components/sections/Services";
 import TrustBar from "@/components/sections/TrustBar";
 import Portfolio from "@/components/sections/Portfolio";
+import BeforeAfter from "@/components/sections/BeforeAfter";
 import Calculator from "@/components/sections/Calculator";
 import AITools from "@/components/sections/AITools";
 import ServiceAreas from "@/components/sections/ServiceAreas";
@@ -27,6 +28,7 @@ export default function Home() {
       <Services />
       <TrustBar />
       <Portfolio />
+      <BeforeAfter />
       <Calculator />
       <AITools />
       <ServiceAreas />
