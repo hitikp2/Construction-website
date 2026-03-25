@@ -273,7 +273,13 @@ const BeforeAfter: React.FC = () => {
   const rafRef = useRef<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoplayRef = useRef(false);
+  const userStoppedRef = useRef(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const currentRef = useRef(0);
   const project = projects[current];
+
+  // Keep currentRef in sync
+  useEffect(() => { currentRef.current = current; }, [current]);
 
   const cleanup = useCallback(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
@@ -340,21 +346,57 @@ const BeforeAfter: React.FC = () => {
     animateStep();
   }, []);
 
+  const startAutoplay = useCallback((fromIndex?: number) => {
+    if (autoplayRef.current) return;
+    autoplayRef.current = true;
+    setIsAutoplay(true);
+    runSweep(fromIndex ?? currentRef.current);
+  }, [runSweep]);
+
   const toggleAutoplay = useCallback(() => {
     if (autoplayRef.current) {
+      userStoppedRef.current = true;
       stopAutoplay();
     } else {
-      autoplayRef.current = true;
-      setIsAutoplay(true);
-      runSweep(current);
+      userStoppedRef.current = false;
+      startAutoplay();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, stopAutoplay, runSweep]);
+  }, [stopAutoplay, startAutoplay]);
 
   // Cleanup on unmount
   useEffect(() => cleanup, [cleanup]);
 
+  // Auto-start when section scrolls into view, stop when it leaves
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // Start autoplay if user hasn't manually stopped it
+          if (!userStoppedRef.current && !autoplayRef.current) {
+            startAutoplay();
+          }
+        } else {
+          // Pause when out of view (don't count as user-stopped)
+          if (autoplayRef.current) {
+            autoplayRef.current = false;
+            setIsAutoplay(false);
+            setOverridePct(null);
+            cleanup();
+          }
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [startAutoplay, cleanup]);
+
   const goTo = useCallback((i: number) => {
+    userStoppedRef.current = true;
     stopAutoplay();
     setFade(true);
     setTimeout(() => {
@@ -364,6 +406,7 @@ const BeforeAfter: React.FC = () => {
   }, [stopAutoplay]);
 
   const next = useCallback(() => {
+    userStoppedRef.current = true;
     stopAutoplay();
     setFade(true);
     setTimeout(() => {
@@ -373,6 +416,7 @@ const BeforeAfter: React.FC = () => {
   }, [stopAutoplay]);
 
   const prev = useCallback(() => {
+    userStoppedRef.current = true;
     stopAutoplay();
     setFade(true);
     setTimeout(() => {
@@ -382,11 +426,12 @@ const BeforeAfter: React.FC = () => {
   }, [stopAutoplay]);
 
   const handleInteract = useCallback(() => {
+    userStoppedRef.current = true;
     stopAutoplay();
   }, [stopAutoplay]);
 
   return (
-    <section id="before-after" className="relative py-24 px-6 bg-[#0a0a0a] overflow-hidden">
+    <section ref={sectionRef} id="before-after" className="relative py-24 px-6 bg-[#0a0a0a] overflow-hidden">
       {/* Atmospheric background */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse 70% 50% at 30% 20%, rgba(200,255,0,.018), transparent), radial-gradient(ellipse 50% 60% at 80% 70%, rgba(0,180,216,.012), transparent)',
