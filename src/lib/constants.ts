@@ -38,6 +38,7 @@ export interface PortfolioItem {
   location: string;
   price: string;
   gradient: string;
+  image: string;
 }
 
 export interface Testimonial {
@@ -232,6 +233,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Los Angeles, CA",
     price: "$285,000",
     gradient: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
   },
   {
     id: "irvine-adu",
@@ -240,6 +242,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Irvine, CA",
     price: "$195,000",
     gradient: "linear-gradient(135deg, #0a3d2e 0%, #145a3e 50%, #1e7a50 100%)",
+    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
   },
   {
     id: "dtla-office-buildout",
@@ -248,6 +251,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Downtown Los Angeles, CA",
     price: "$420,000",
     gradient: "linear-gradient(135deg, #2d1b4e 0%, #462a6e 50%, #5e3a8e 100%)",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
   },
   {
     id: "corona-outdoor-kitchen",
@@ -256,6 +260,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Corona, CA",
     price: "$78,000",
     gradient: "linear-gradient(135deg, #3e2a0a 0%, #5c3d10 50%, #7a5018 100%)",
+    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
   },
   {
     id: "pasadena-craftsman-remodel",
@@ -264,6 +269,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Pasadena, CA",
     price: "$340,000",
     gradient: "linear-gradient(135deg, #1a0a2e 0%, #2e1650 50%, #441e72 100%)",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
   },
   {
     id: "rancho-cucamonga-adu",
@@ -272,6 +278,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Rancho Cucamonga, CA",
     price: "$245,000",
     gradient: "linear-gradient(135deg, #0a2a3e 0%, #103e5c 50%, #18527a 100%)",
+    image: "https://images.unsplash.com/photo-1600573472556-e636c2acda9e?w=800&q=80",
   },
   {
     id: "newport-beach-retail",
@@ -280,6 +287,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Newport Beach, CA",
     price: "$310,000",
     gradient: "linear-gradient(135deg, #3e0a1a 0%, #5c1028 50%, #7a1838 100%)",
+    image: "https://images.unsplash.com/photo-1604014237800-1c9102c219da?w=800&q=80",
   },
   {
     id: "thousand-oaks-patio",
@@ -288,6 +296,7 @@ export const PORTFOLIO_ITEMS: PortfolioItem[] = [
     location: "Thousand Oaks, CA",
     price: "$62,000",
     gradient: "linear-gradient(135deg, #1a2e0a 0%, #2e4a10 50%, #3e6218 100%)",
+    image: "https://images.unsplash.com/photo-1600566753086-00f18f6b8067?w=800&q=80",
   },
 ];
 

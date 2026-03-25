@@ -58,13 +58,24 @@ const Portfolio: React.FC = () => {
                 className="group relative aspect-video rounded-[20px] overflow-hidden cursor-pointer border border-white/5 transition-all duration-300 hover:border-[#c8ff00]/20 hover:shadow-[0_8px_30px_rgba(200,255,0,0.1)]"
                 style={{ background: item.gradient }}
               >
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                  <h3 className="text-xl font-semibold text-[#f0efe9]">
+                {/* Project Photo */}
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+
+                {/* Gradient overlay — always visible for readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+                {/* Project info — always visible at bottom */}
+                <div className="absolute inset-0 flex flex-col justify-end p-5">
+                  <h3 className="text-lg font-semibold text-[#f0efe9] font-sans">
                     {item.title}
                   </h3>
-                  <p className="text-[#a8a8a0] text-sm mt-1">{item.location}</p>
-                  <p className="text-[#c8ff00] font-mono mt-1">{item.price}</p>
+                  <p className="text-[#a8a8a0] text-sm font-sans mt-0.5">{item.location}</p>
+                  <p className="text-[#c8ff00] font-mono text-sm mt-0.5">{item.price}</p>
                 </div>
               </motion.div>
             ))}
