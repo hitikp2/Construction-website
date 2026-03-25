@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Bot, Eye, Send, Upload, RotateCcw, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { Bot, Eye, Send, Upload, RotateCcw, Loader2, AlertCircle, Sparkles, X, Download, Maximize2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { SectionHeader } from '../ui/SectionHeader';
 import { Card } from '../ui/Card';
@@ -344,6 +344,219 @@ const MiniSlider: React.FC<MiniSliderProps> = ({ beforeSrc, afterSrc }) => {
 };
 
 /* ------------------------------------------------------------------ */
+/*  Results Modal                                                      */
+/* ------------------------------------------------------------------ */
+
+interface ResultsModalProps {
+  open: boolean;
+  onClose: () => void;
+  result: VisionResult;
+  beforeSrc: string;
+  afterSrc: string | null;
+  isGenerating: boolean;
+  userVision: string;
+}
+
+const ResultsModal: React.FC<ResultsModalProps> = ({
+  open, onClose, result, beforeSrc, afterSrc, isGenerating, userVision,
+}) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll when open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, onClose]);
+
+  const handleDownload = useCallback(() => {
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remodel Estimate — ${COMPANY.name}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:#0a0a0a;color:#f0efe9;padding:32px;max-width:800px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid #222}
+.header h1{font-size:20px;font-weight:700}
+.header .date{font-size:12px;color:#888}
+.badge{display:inline-block;background:#c8ff0018;color:#c8ff00;padding:4px 14px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:16px}
+.vision{background:#161616;border:1px solid #222;border-radius:12px;padding:16px;margin-bottom:16px;font-size:14px;color:#a8a8a0;line-height:1.6}
+.vision strong{color:#c8ff00;font-size:11px;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px}
+.desc{font-size:14px;color:#a8a8a0;line-height:1.7;margin-bottom:24px}
+.images{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.images img{width:100%;border-radius:12px;border:1px solid #222}
+.images .label{font-size:11px;color:#888;text-align:center;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+table{width:100%;border-collapse:collapse;margin-bottom:24px}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid #1a1a1a}
+td:last-child{text-align:right;font-family:monospace;color:#a8a8a0}
+.total td{border-top:2px solid #333;border-bottom:none;font-weight:700;font-size:18px}
+.total td:last-child{color:#c8ff00}
+.footer{margin-top:32px;padding-top:16px;border-top:1px solid #222;font-size:12px;color:#555;text-align:center}
+.footer a{color:#c8ff00;text-decoration:none}
+@media print{body{background:#fff;color:#111}td:last-child{color:#333}.total td:last-child{color:#111}.badge{background:#eee;color:#333}.vision{background:#f5f5f5;border-color:#ddd}.header,.footer{border-color:#ddd}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>${COMPANY.name}</h1>
+  <span class="date">${date}</span>
+</div>
+<div class="badge">${result.room_type}</div>
+${userVision ? `<div class="vision"><strong>Your Vision</strong>${userVision}</div>` : ''}
+<p class="desc">${result.remodel_description}</p>
+<div class="images">
+  <div><img src="${beforeSrc}" alt="Before"><div class="label">Before</div></div>
+  ${afterSrc ? `<div><img src="${afterSrc}" alt="After — AI Visualization"><div class="label">After — AI</div></div>` : ''}
+</div>
+<table>
+${result.cost_items.map(item => `  <tr><td>${item.item}</td><td>${formatCurrency(item.cost)}</td></tr>`).join('\n')}
+  <tr class="total"><td>Estimated Total</td><td>${formatCurrency(result.total)}</td></tr>
+</table>
+<div class="footer">
+  <p>${COMPANY.name} · ${COMPANY.phone} · <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
+  <p style="margin-top:4px">This is an AI-generated estimate. Contact us for an exact quote.</p>
+</div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `remodel-estimate-${result.room_type.toLowerCase().replace(/\s+/g, '-')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [result, beforeSrc, afterSrc, userVision]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-2xl mx-4 my-8 bg-[#0e0e0e] border border-white/5 rounded-2xl overflow-hidden shadow-[0_32px_100px_rgba(0,0,0,0.8)]"
+      >
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#c8ff00]/10">
+              <Sparkles className="w-4 h-4 text-[#c8ff00]" />
+            </div>
+            <h3 className="text-[#f0efe9] font-semibold font-sans text-lg">Your Remodel Estimate</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-[#6a6a64] hover:text-[#f0efe9] hover:bg-white/5 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal body */}
+        <div className="p-5 space-y-5">
+          {/* Room type badge + user vision */}
+          <div className="space-y-3">
+            <span className="inline-block bg-[#c8ff00]/10 text-[#c8ff00] rounded-full px-3 py-1 text-sm font-medium font-sans">
+              {result.room_type}
+            </span>
+            {userVision && (
+              <div className="bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3">
+                <p className="text-[0.65rem] font-mono font-semibold tracking-[0.1em] uppercase text-[#c8ff00] mb-1">Your Vision</p>
+                <p className="text-[#a8a8a0] text-sm font-sans leading-relaxed">{userVision}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Before/After comparison — full width, natural aspect ratio */}
+          {afterSrc ? (
+            <div className="space-y-2">
+              <MiniSlider beforeSrc={beforeSrc} afterSrc={afterSrc} />
+              <p className="text-[#5a5a54] text-xs text-center font-sans">
+                <span className="text-[#c8ff00]">&larr;</span> Drag to compare <span className="text-[#c8ff00]">&rarr;</span>
+              </p>
+            </div>
+          ) : isGenerating ? (
+            <div className="flex items-center justify-center gap-3 py-10">
+              <Loader2 className="w-6 h-6 text-[#c8ff00] animate-spin" />
+              <p className="text-[#a8a8a0] text-sm font-sans">Generating visualization...</p>
+            </div>
+          ) : (
+            <div className="rounded-xl overflow-hidden border border-white/5">
+              <img src={beforeSrc} alt="Uploaded room" className="w-full h-auto" />
+            </div>
+          )}
+
+          {/* Description */}
+          <p className="text-[#a8a8a0] text-sm leading-relaxed font-sans">
+            {result.remodel_description}
+          </p>
+
+          {/* Cost breakdown */}
+          <div className="bg-white/[0.02] rounded-xl overflow-hidden border border-white/[0.04]">
+            <div className="divide-y divide-white/5">
+              {result.cost_items.map((item, i) => (
+                <div key={i} className="flex justify-between items-center px-4 py-3">
+                  <span className="text-[#f0efe9] text-sm font-sans">{item.item}</span>
+                  <span className="text-[#a8a8a0] text-sm font-mono">{formatCurrency(item.cost)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between items-center px-4 py-4 border-t-2 border-white/10 bg-white/[0.02]">
+                <span className="text-[#f0efe9] font-bold text-lg font-sans">Estimated Total</span>
+                <span className="text-[#c8ff00] font-bold text-lg font-mono">
+                  {formatCurrency(result.total)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3 pt-2">
+            <button
+              onClick={handleDownload}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-[#f0efe9] text-sm font-semibold font-sans hover:bg-white/5 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Save Estimate
+            </button>
+            <Button variant="primary" size="sm" href="/#contact">
+              Get Exact Quote
+            </Button>
+          </div>
+
+          {/* Footer */}
+          <p className="text-[#5a5a54] text-[0.65rem] text-center font-sans pt-2">
+            This is an AI-generated estimate. Contact us for an exact quote.
+            <br />{COMPANY.phone} · {COMPANY.email}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
 /*  AI Remodel Visualizer Panel                                        */
 /* ------------------------------------------------------------------ */
 
@@ -356,6 +569,7 @@ const AIVision: React.FC = () => {
   const [vizError, setVizError] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<{ base64: string; mediaType: string } | null>(null);
   const [userVision, setUserVision] = useState('');
+  const [showModal, setShowModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -434,6 +648,7 @@ const AIVision: React.FC = () => {
           setVizError(vizData.error || 'Failed to generate visualization.');
         } else {
           setGeneratedImage({ data: vizData.image, mimeType: vizData.mimeType });
+          setShowModal(true);
         }
       } catch {
         setVizError('Failed to connect to the image generation service.');
@@ -472,6 +687,7 @@ const AIVision: React.FC = () => {
         setVizError(data.error || 'Failed to generate visualization.');
       } else {
         setGeneratedImage({ data: data.image, mimeType: data.mimeType });
+        setShowModal(true);
       }
     } catch {
       setVizError('Failed to connect to the image generation service.');
@@ -488,6 +704,7 @@ const AIVision: React.FC = () => {
     setVizError(null);
     setUploadedImage(null);
     setUserVision('');
+    setShowModal(false);
   };
 
   return (
@@ -562,13 +779,25 @@ const AIVision: React.FC = () => {
             {/* Before/After comparison slider */}
             {generatedImage && uploadedImage ? (
               <div className="space-y-2">
-                <MiniSlider
-                  beforeSrc={`data:${uploadedImage.mediaType};base64,${uploadedImage.base64}`}
-                  afterSrc={`data:${generatedImage.mimeType};base64,${generatedImage.data}`}
-                />
-                <p className="text-[#5a5a54] text-xs text-center font-sans">
-                  <span className="text-[#c8ff00]">&larr;</span> Drag to compare <span className="text-[#c8ff00]">&rarr;</span>
-                </p>
+                <div className="relative">
+                  <MiniSlider
+                    beforeSrc={`data:${uploadedImage.mediaType};base64,${uploadedImage.base64}`}
+                    afterSrc={`data:${generatedImage.mimeType};base64,${generatedImage.data}`}
+                  />
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="absolute bottom-2 right-2 z-30 p-2 rounded-lg bg-black/60 text-white/70 hover:text-white backdrop-blur-sm transition-colors"
+                    aria-label="View full estimate"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="w-full text-[#c8ff00] text-xs text-center font-sans hover:underline"
+                >
+                  View Full Estimate &amp; Download
+                </button>
               </div>
             ) : isGenerating ? (
               <div className="flex items-center justify-center gap-3 py-6">
@@ -687,6 +916,19 @@ const AIVision: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Results Modal */}
+      {result && uploadedImage && (
+        <ResultsModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          result={result}
+          beforeSrc={`data:${uploadedImage.mediaType};base64,${uploadedImage.base64}`}
+          afterSrc={generatedImage ? `data:${generatedImage.mimeType};base64,${generatedImage.data}` : null}
+          isGenerating={isGenerating}
+          userVision={userVision}
+        />
+      )}
     </Card>
   );
 };
