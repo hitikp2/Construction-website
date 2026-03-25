@@ -355,68 +355,114 @@ const AIVision: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [vizError, setVizError] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<{ base64: string; mediaType: string } | null>(null);
+  const [userVision, setUserVision] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        const mediaType = file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
-
-        try {
-          const res = await fetch('/api/vision', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: base64, mediaType }),
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            setError(data.error || 'Failed to analyze the image. Please try again.');
-            setResult(null);
-          } else {
-            setResult(data);
-            setError(null);
-            setUploadedImage({ base64, mediaType });
-          }
-        } catch {
-          setError('Failed to connect to the analysis service. Please try again.');
-          setResult(null);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch {
-      setIsLoading(false);
-      setError('Failed to read the image file.');
-    }
-
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      const mediaType = file.type as string;
+      setUploadedImage({ base64, mediaType });
+      setUserVision('');
+      setResult(null);
+      setGeneratedImage(null);
+      setError(null);
+      setVizError(null);
+    };
+    reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  const handleGenerateImage = async () => {
-    if (!result) return;
+  const handleSubmitVision = async () => {
+    if (!uploadedImage) return;
+    setIsLoading(true);
+    setError(null);
+    setVizError(null);
+
+    const visionPrompt = userVision.trim()
+      ? `The homeowner wants: "${userVision.trim()}". Analyze this room photo and provide a remodel estimate based on their vision. Return ONLY valid JSON with this exact structure: {"room_type": "string", "remodel_description": "string describing the remodel based on the homeowner's vision", "cost_items": [{"item": "string", "cost": number}], "total": number}. Be realistic with Southern California 2026 pricing.`
+      : undefined;
+
+    try {
+      // Send to vision API for cost analysis
+      const res = await fetch('/api/vision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: uploadedImage.base64,
+          mediaType: uploadedImage.mediaType,
+          customPrompt: visionPrompt,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to analyze the image. Please try again.');
+        setResult(null);
+        setIsLoading(false);
+        return;
+      }
+
+      setResult(data);
+      setIsLoading(false);
+
+      // Automatically start image generation
+      setIsGenerating(true);
+      try {
+        const prompt = userVision.trim()
+          ? `${userVision.trim()}. ${data.remodel_description}. Items: ${data.cost_items.map((c: { item: string }) => c.item).join(', ')}.`
+          : `${data.room_type} remodel: ${data.remodel_description}. Items: ${data.cost_items.map((c: { item: string }) => c.item).join(', ')}.`;
+
+        const vizRes = await fetch('/api/visualize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt,
+            referenceImage: uploadedImage.base64,
+            referenceMediaType: uploadedImage.mediaType,
+          }),
+        });
+
+        const vizData = await vizRes.json();
+
+        if (!vizRes.ok) {
+          setVizError(vizData.error || 'Failed to generate visualization.');
+        } else {
+          setGeneratedImage({ data: vizData.image, mimeType: vizData.mimeType });
+        }
+      } catch {
+        setVizError('Failed to connect to the image generation service.');
+      } finally {
+        setIsGenerating(false);
+      }
+    } catch {
+      setError('Failed to connect to the analysis service. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleRetryVisualize = async () => {
+    if (!result || !uploadedImage) return;
     setIsGenerating(true);
     setVizError(null);
 
     try {
-      const prompt = `${result.room_type} remodel: ${result.remodel_description}. Items: ${result.cost_items.map(c => c.item).join(', ')}.`;
+      const prompt = userVision.trim()
+        ? `${userVision.trim()}. ${result.remodel_description}. Items: ${result.cost_items.map(c => c.item).join(', ')}.`
+        : `${result.room_type} remodel: ${result.remodel_description}. Items: ${result.cost_items.map(c => c.item).join(', ')}.`;
+
       const res = await fetch('/api/visualize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
-          referenceImage: uploadedImage?.base64,
-          referenceMediaType: uploadedImage?.mediaType,
+          referenceImage: uploadedImage.base64,
+          referenceMediaType: uploadedImage.mediaType,
         }),
       });
 
@@ -441,6 +487,7 @@ const AIVision: React.FC = () => {
     setIsGenerating(false);
     setVizError(null);
     setUploadedImage(null);
+    setUserVision('');
   };
 
   return (
@@ -512,7 +559,7 @@ const AIVision: React.FC = () => {
               </div>
             </div>
 
-            {/* Generated comparison slider or generate button */}
+            {/* Before/After comparison slider */}
             {generatedImage && uploadedImage ? (
               <div className="space-y-2">
                 <MiniSlider
@@ -523,30 +570,23 @@ const AIVision: React.FC = () => {
                   <span className="text-[#c8ff00]">&larr;</span> Drag to compare <span className="text-[#c8ff00]">&rarr;</span>
                 </p>
               </div>
-            ) : (
+            ) : isGenerating ? (
+              <div className="flex items-center justify-center gap-3 py-6">
+                <Loader2 className="w-5 h-5 text-[#c8ff00] animate-spin" />
+                <p className="text-[#a8a8a0] text-sm font-sans">Generating visualization...</p>
+              </div>
+            ) : vizError ? (
               <div className="space-y-2">
                 <button
-                  onClick={handleGenerateImage}
-                  disabled={isGenerating}
-                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#c8ff00]/10 border border-[#c8ff00]/20 text-[#c8ff00] text-sm font-semibold font-sans hover:bg-[#c8ff00]/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleRetryVisualize}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#c8ff00]/10 border border-[#c8ff00]/20 text-[#c8ff00] text-sm font-semibold font-sans hover:bg-[#c8ff00]/15 transition-colors"
                 >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Generating visualization...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      {vizError ? 'Try Again' : 'Visualize This Remodel'}
-                    </>
-                  )}
+                  <Sparkles className="w-4 h-4" />
+                  Try Again
                 </button>
-                {vizError && (
-                  <p className="text-red-400/80 text-xs text-center font-sans">{vizError}</p>
-                )}
+                <p className="text-red-400/80 text-xs text-center font-sans">{vizError}</p>
               </div>
-            )}
+            ) : null}
 
             <div className="flex flex-col gap-3 mt-2">
               <Button variant="primary" size="sm" href="/#contact">
@@ -563,38 +603,87 @@ const AIVision: React.FC = () => {
             </div>
           </div>
         ) : (
-          /* Upload zone */
+          /* Upload & Describe flow */
           <div className="h-full flex flex-col">
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-8 text-center cursor-pointer hover:border-[#c8ff00]/30 hover:bg-white/[0.02] transition-all"
-              role="button"
-              tabIndex={0}
-              aria-label="Upload a photo of your room"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
-              }}
-            >
-              <Upload className="w-10 h-10 text-[#6a6a64] mb-4" />
-              <p className="text-[#f0efe9] font-medium font-sans mb-1">
-                Drop a photo or click to upload
-              </p>
-              <p className="text-[#6a6a64] text-sm font-sans">
-                JPG, PNG, or WebP — we&apos;ll analyze and estimate costs
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-                aria-hidden="true"
-              />
-            </div>
+            {uploadedImage ? (
+              /* Step 2: Photo uploaded — describe your vision */
+              <div className="flex flex-col gap-4 h-full">
+                {/* Photo preview */}
+                <div className="relative rounded-xl overflow-hidden border border-white/5">
+                  <img
+                    src={`data:${uploadedImage.mediaType};base64,${uploadedImage.base64}`}
+                    alt="Uploaded room"
+                    className="w-full h-auto max-h-48 object-cover"
+                  />
+                  <button
+                    onClick={() => { setUploadedImage(null); setUserVision(''); }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white/60 hover:text-white backdrop-blur-sm transition-colors"
+                    aria-label="Remove photo"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
-            <p className="mt-4 text-[#6a6a64] text-xs text-center font-sans">
-              Upload a photo of any room and our AI will provide a detailed remodel estimate
-            </p>
+                {/* Vision description input */}
+                <div className="flex-1 flex flex-col gap-3">
+                  <label className="text-[#f0efe9] text-sm font-medium font-sans">
+                    Describe your vision <span className="text-[#5a5a54] font-normal">(optional)</span>
+                  </label>
+                  <textarea
+                    value={userVision}
+                    onChange={(e) => setUserVision(e.target.value)}
+                    placeholder="e.g. Modern kitchen with white shaker cabinets, quartz countertops, and a large island with pendant lights..."
+                    className="flex-1 min-h-[80px] bg-white/5 rounded-xl px-4 py-3 text-sm text-[#f0efe9] placeholder:text-[#6a6a64] outline-none focus:ring-1 focus:ring-[#c8ff00]/30 font-sans resize-none transition-all"
+                  />
+                  <p className="text-[#5a5a54] text-xs font-sans">
+                    Tell us what you envision, or leave blank for AI suggestions
+                  </p>
+                </div>
+
+                {/* Submit button */}
+                <button
+                  onClick={handleSubmitVision}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#c8ff00] text-black text-sm font-semibold font-sans hover:bg-[#d4ff33] transition-colors"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Generate Estimate &amp; Visualization
+                </button>
+              </div>
+            ) : (
+              /* Step 1: Upload a photo */
+              <>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl p-8 text-center cursor-pointer hover:border-[#c8ff00]/30 hover:bg-white/[0.02] transition-all"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Upload a photo of your room"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
+                  }}
+                >
+                  <Upload className="w-10 h-10 text-[#6a6a64] mb-4" />
+                  <p className="text-[#f0efe9] font-medium font-sans mb-1">
+                    Drop a photo or click to upload
+                  </p>
+                  <p className="text-[#6a6a64] text-sm font-sans">
+                    JPG, PNG, or WebP — describe your vision &amp; see it come to life
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <p className="mt-4 text-[#6a6a64] text-xs text-center font-sans">
+                  Upload a photo, describe your remodel, and get an AI estimate with visualization
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>

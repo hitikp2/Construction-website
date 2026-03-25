@@ -4,6 +4,7 @@ interface VisionRequest {
   image: string;
   mediaType?: string;
   mimeType?: string;
+  customPrompt?: string;
 }
 
 interface CostItem {
@@ -41,7 +42,7 @@ function extractJSON(text: string): VisionResult {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { image, mediaType, mimeType } = body as VisionRequest;
+    const { image, mediaType, mimeType, customPrompt } = body as VisionRequest;
 
     if (!image) {
       return NextResponse.json(
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
                     data: image,
                   },
                 },
-                { text: ANALYSIS_PROMPT },
+                { text: customPrompt || ANALYSIS_PROMPT },
               ],
             },
           ],
