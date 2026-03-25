@@ -97,25 +97,24 @@ const Hero: React.FC = () => {
             Los Angeles, San Bernardino, Orange County, and beyond.
           </motion.p>
 
-          {/* Review ratings bar */}
+          {/* Review ratings — compact 2x2 grid */}
           <motion.div
             variants={itemVariants}
-            className="mt-8 flex flex-wrap gap-x-6 gap-y-3"
+            className="mt-8 inline-grid grid-cols-2 gap-x-px gap-y-px rounded-xl overflow-hidden border border-white/5"
           >
             {reviewPlatforms.map((platform) => (
               <div
                 key={platform.name}
-                className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-4 py-2.5"
+                className="flex items-center gap-2 bg-white/[0.03] px-4 py-2.5"
               >
-                <span className="text-sm text-[#a8a8a0] font-sans font-medium">
+                <span className="text-sm text-[#a8a8a0] font-sans font-medium whitespace-nowrap">
                   {platform.name}
                 </span>
-                <div className="flex items-center gap-1">
-                  {/* Stars */}
+                <div className="flex items-center gap-0.5">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className="w-3.5 h-3.5 fill-[#c8ff00] text-[#c8ff00]"
+                      className="w-3 h-3 fill-[#c8ff00] text-[#c8ff00]"
                     />
                   ))}
                 </div>
