@@ -91,24 +91,23 @@ const Spark: React.FC<{ index: number }> = ({ index }) => {
 
 interface StageProps {
   project: typeof projects[0];
+  overridePct: number | null;
+  fade: boolean;
   onInteract: () => void;
 }
 
-const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
-  const [pct, setPct] = useState(50);
+const Stage: React.FC<StageProps> = ({ project, overridePct, fade, onInteract }) => {
+  const [internalPct, setInternalPct] = useState(50);
   const [dragging, setDragging] = useState(false);
-  const [fade, setFade] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Crossfade on project change and reset slider
+  // Reset internal slider when project changes
   useEffect(() => {
-    setFade(true);
-    const t = setTimeout(() => {
-      setPct(50);
-      setFade(false);
-    }, 250);
-    return () => clearTimeout(t);
+    setInternalPct(50);
   }, [project]);
+
+  const pct = overridePct !== null ? overridePct : internalPct;
+  const setPct = setInternalPct;
 
   const getPct = useCallback((clientX: number) => {
     if (!stageRef.current) return 50;
@@ -253,42 +252,134 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
 /*  Main Section                                                       */
 /* ------------------------------------------------------------------ */
 
+/* ── Easing helper ── */
+function easeInOut(t: number) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+/* ── Sweep keyframes: dramatic 50 → 15 → 85 → 50 ── */
+const SWEEP_STEPS = [
+  { target: 15, duration: 1200 },
+  { target: 85, duration: 1800 },
+  { target: 50, duration: 1000 },
+];
+const SWEEP_TOTAL = SWEEP_STEPS.reduce((s, k) => s + k.duration, 0) + 800; // +pause
+
 const BeforeAfter: React.FC = () => {
   const [current, setCurrent] = useState(0);
   const [isAutoplay, setIsAutoplay] = useState(false);
-  const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [overridePct, setOverridePct] = useState<number | null>(null);
+  const [fade, setFade] = useState(false);
+  const rafRef = useRef<number | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoplayRef = useRef(false);
   const project = projects[current];
 
-  const stopAutoplay = useCallback(() => {
-    setIsAutoplay(false);
-    if (autoRef.current) {
-      clearTimeout(autoRef.current);
-      autoRef.current = null;
-    }
+  const cleanup = useCallback(() => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
   }, []);
+
+  const stopAutoplay = useCallback(() => {
+    autoplayRef.current = false;
+    setIsAutoplay(false);
+    setOverridePct(null);
+    cleanup();
+  }, [cleanup]);
+
+  // Run one sweep cycle: animate slider, then fade to next project
+  const runSweep = useCallback((projectIndex: number) => {
+    if (!autoplayRef.current) return;
+
+    let stepIdx = 0;
+    let startVal = 50;
+
+    function animateStep() {
+      if (!autoplayRef.current) return;
+      if (stepIdx >= SWEEP_STEPS.length) {
+        // Sweep done — fade, switch project, repeat
+        timeoutRef.current = setTimeout(() => {
+          if (!autoplayRef.current) return;
+          setFade(true);
+          timeoutRef.current = setTimeout(() => {
+            if (!autoplayRef.current) return;
+            const nextIdx = (projectIndex + 1) % projects.length;
+            setCurrent(nextIdx);
+            setOverridePct(50);
+            setFade(false);
+            timeoutRef.current = setTimeout(() => runSweep(nextIdx), 400);
+          }, 300);
+        }, 500);
+        return;
+      }
+
+      const { target, duration } = SWEEP_STEPS[stepIdx];
+      const from = startVal;
+      const startTime = performance.now();
+
+      function tick(now: number) {
+        if (!autoplayRef.current) return;
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const val = from + (target - from) * easeInOut(t);
+        setOverridePct(val);
+
+        if (t < 1) {
+          rafRef.current = requestAnimationFrame(tick);
+        } else {
+          startVal = target;
+          stepIdx++;
+          animateStep();
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
+    setOverridePct(50);
+    animateStep();
+  }, []);
+
+  const toggleAutoplay = useCallback(() => {
+    if (autoplayRef.current) {
+      stopAutoplay();
+    } else {
+      autoplayRef.current = true;
+      setIsAutoplay(true);
+      runSweep(current);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, stopAutoplay, runSweep]);
+
+  // Cleanup on unmount
+  useEffect(() => cleanup, [cleanup]);
 
   const goTo = useCallback((i: number) => {
     stopAutoplay();
-    setCurrent(i);
+    setFade(true);
+    setTimeout(() => {
+      setCurrent(i);
+      setFade(false);
+    }, 250);
   }, [stopAutoplay]);
 
-  const next = useCallback(() => setCurrent(i => (i + 1) % projects.length), []);
-  const prev = useCallback(() => setCurrent(i => (i - 1 + projects.length) % projects.length), []);
+  const next = useCallback(() => {
+    stopAutoplay();
+    setFade(true);
+    setTimeout(() => {
+      setCurrent(i => (i + 1) % projects.length);
+      setFade(false);
+    }, 250);
+  }, [stopAutoplay]);
 
-  // Autoplay
-  useEffect(() => {
-    if (!isAutoplay) return;
-    autoRef.current = setTimeout(() => {
-      next();
-    }, 5000);
-    return () => {
-      if (autoRef.current) clearTimeout(autoRef.current);
-    };
-  }, [isAutoplay, current, next]);
-
-  const toggleAutoplay = useCallback(() => {
-    setIsAutoplay(a => !a);
-  }, []);
+  const prev = useCallback(() => {
+    stopAutoplay();
+    setFade(true);
+    setTimeout(() => {
+      setCurrent(i => (i - 1 + projects.length) % projects.length);
+      setFade(false);
+    }, 250);
+  }, [stopAutoplay]);
 
   const handleInteract = useCallback(() => {
     stopAutoplay();
@@ -310,7 +401,7 @@ const BeforeAfter: React.FC = () => {
 
         <div className="max-w-[1100px] mx-auto">
           {/* Stage */}
-          <Stage project={project} onInteract={handleInteract} />
+          <Stage project={project} overridePct={overridePct} fade={fade} onInteract={handleInteract} />
 
           {/* Drag hint */}
           <p className="text-center text-sm text-[#5a5a54] mt-3 font-sans">
@@ -368,7 +459,7 @@ const BeforeAfter: React.FC = () => {
                   className="h-full bg-[#c8ff00] rounded-full"
                   initial={{ width: '0%' }}
                   animate={{ width: '100%' }}
-                  transition={{ duration: 5, ease: 'linear' }}
+                  transition={{ duration: SWEEP_TOTAL / 1000, ease: 'linear' }}
                 />
               </div>
             )}
