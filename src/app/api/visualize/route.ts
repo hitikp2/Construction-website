@@ -58,11 +58,14 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     const parts = data.candidates?.[0]?.content?.parts ?? [];
 
+    // Gemini API may return camelCase (inlineData) or snake_case (inline_data)
     const imagePart = parts.find(
-      (p: { inline_data?: { mime_type: string; data: string } }) => p.inline_data
+      (p: Record<string, unknown>) => p.inlineData || p.inline_data
     );
 
-    if (!imagePart?.inline_data) {
+    const imageData = imagePart?.inlineData || imagePart?.inline_data;
+
+    if (!imageData) {
       console.error('Nano Banana 2 returned no image. Parts:', JSON.stringify(parts.map((p: Record<string, unknown>) => Object.keys(p))));
       return NextResponse.json(
         { error: 'The AI was unable to generate an image. Please try again.' },
@@ -71,8 +74,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      image: imagePart.inline_data.data,
-      mimeType: imagePart.inline_data.mime_type,
+      image: imageData.data,
+      mimeType: imageData.mimeType || imageData.mime_type || 'image/png',
     });
   } catch (error) {
     console.error('Visualize API error:', error);
