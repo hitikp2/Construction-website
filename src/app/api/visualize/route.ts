@@ -39,7 +39,18 @@ export async function POST(request: NextRequest) {
         },
       });
       parts.push({
-        text: `Using this photo as reference, generate a remodeled version of this exact space from the same camera angle and perspective. Apply these changes: ${prompt}. Keep the same room layout, dimensions, and viewpoint. Make it photorealistic.`,
+        text: `Edit this photo to show ONLY the following remodel changes: ${prompt}.
+
+STRICT RULES — you MUST follow all of these:
+- Keep the EXACT same camera angle, perspective, and viewpoint as the original photo.
+- Keep ALL existing structures, walls, fences, buildings, trees, and architectural elements in their EXACT original positions, sizes, and proportions. Do NOT move, resize, add, or remove any structural elements.
+- Do NOT extend walkways, driveways, patios, or any hardscape beyond their current boundaries.
+- Do NOT move trees, poles, or fixed objects. They must stay exactly where they are.
+- Do NOT change the background, sky, neighboring properties, or anything outside the property boundaries.
+- ONLY modify the specific surfaces, materials, fixtures, plants, or finishes that the remodel description calls for.
+- The result must look like a realistic renovation of THIS SPECIFIC space — not a reimagined space.
+- Maintain the same lighting conditions, time of day, and shadows as the original photo.
+- The output image must be photorealistic and indistinguishable from a real photograph.`,
       });
     } else {
       parts.push({
