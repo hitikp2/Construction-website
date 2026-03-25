@@ -3,6 +3,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PhoneCTA } from "@/components/layout/PhoneCTA";
 import { Preloader } from "@/components/layout/Preloader";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -49,14 +50,8 @@ export default function RootLayout({
       lang="en"
       className="h-full antialiased"
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `history.scrollRestoration="manual";if(location.hash)history.replaceState(null,"",location.pathname);window.scrollTo(0,0)`,
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-[#f0efe9] font-sans">
+        <ScrollToTop />
         <Preloader />
         <Navbar />
         <main className="flex-1">{children}</main>
