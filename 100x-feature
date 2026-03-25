@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100x Features — X Construction</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060606;--bg2:#0d0d0d;--bg3:#151515;--bg4:#1e1e1e;
+  --surface:#111;--surface2:#191919;--surface3:#222;
+  --text:#f0efe9;--text2:#a8a8a0;--text3:#5e5e58;
+  --accent:#c8ff00;--accent2:#a8d900;--glow:rgba(200,255,0,.12);
+  --warm:#ff6b35;--blue:#00b4d8;--violet:#9b5de5;--gold:#ffd60a;--green:#22c55e;--red:#ef4444;
+  --font:'Outfit',sans-serif;--fd:'Playfair Display',serif;--fm:'JetBrains Mono',monospace;
+  --r:12px;--rl:20px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,textarea,select{font-family:inherit;outline:none}
+ul{list-style:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:99px}
+.container{max-width:1280px;margin:0 auto;padding:0 24px}
+.section{padding:100px 0;position:relative}
+.section-alt{background:var(--bg2)}
+.slabel{font-family:var(--fm);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.slabel::before{content:'';width:20px;height:1px;background:var(--accent)}
+.stitle{font-family:var(--fd);font-size:clamp(1.8rem,4vw,3rem);line-height:1.1;margin-bottom:14px}
+.stitle em{color:var(--accent);font-style:italic}
+.ssub{color:var(--text3);font-size:.95rem;max-width:560px;line-height:1.7;margin-bottom:40px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:12px 26px;border-radius:99px;font-weight:600;font-size:.85rem;transition:all .25s ease}
+.btn-p{background:var(--accent);color:var(--bg);box-shadow:0 0 30px rgba(200,255,0,.12)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(200,255,0,.25)}
+.btn-o{border:1.5px solid rgba(200,255,0,.3);color:var(--accent)}
+.btn-o:hover{background:rgba(200,255,0,.05)}
+.btn-s{padding:8px 16px;font-size:.75rem}
+.fade-in{opacity:0;transform:translateY(25px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.divider-line{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(200,255,0,.08),transparent);margin:0}
+.tag{padding:3px 10px;border-radius:99px;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:inline-flex;align-items:center;gap:4px}
+.tag-green{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.15)}
+.tag-accent{background:rgba(200,255,0,.08);color:var(--accent);border:1px solid rgba(200,255,0,.1)}
+.tag-blue{background:rgba(0,180,216,.08);color:var(--blue);border:1px solid rgba(0,180,216,.12)}
+.tag-violet{background:rgba(155,93,229,.08);color:var(--violet);border:1px solid rgba(155,93,229,.12)}
+.tag-gold{background:rgba(255,214,10,.08);color:var(--gold);border:1px solid rgba(255,214,10,.12)}
+
+/* ══════════════════════════════════════════════
+
+1. CLIENT PORTAL DEMO
+   ══════════════════════════════════════════════ */
+   .portal-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:32px;align-items:start}
+   @media(max-width:900px){.portal-grid{grid-template-columns:1fr}}
+   .portal-demo{background:var(–surface);border:1px solid rgba(255,255,255,.04);border-radius:var(–rl);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+   .portal-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(–bg3);border-bottom:1px solid rgba(255,255,255,.04)}
+   .portal-dot{width:8px;height:8px;border-radius:50%}
+   .portal-bar-title{font-size:.72rem;color:var(–text3);margin-left:8px;font-weight:500}
+   .portal-nav{display:flex;border-bottom:1px solid rgba(255,255,255,.04)}
+   .portal-nav button{flex:1;padding:10px 8px;font-size:.7rem;font-weight:600;color:var(–text3);border-bottom:2px solid transparent;transition:all .2s}
+   .portal-nav button.active{color:var(–accent);border-bottom-color:var(–accent)}
+   .portal-nav button:hover{color:var(–text2)}
+   .portal-body{padding:18px}
+   .portal-panel{display:none}
+   .portal-panel.active{display:block}
+
+/* Progress tracker */
+.progress-track{display:flex;gap:0;margin-bottom:20px;position:relative}
+.progress-track::before{content:’’;position:absolute;top:14px;left:24px;right:24px;height:2px;background:var(–bg3)}
+.progress-step{flex:1;text-align:center;position:relative;z-index:1}
+.progress-step .dot{width:28px;height:28px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;font-size:.65rem;font-weight:700;border:2px solid var(–bg3);background:var(–bg);color:var(–text3);transition:all .3s}
+.progress-step.done .dot{background:var(–accent);border-color:var(–accent);color:var(–bg)}
+.progress-step.current .dot{border-color:var(–accent);color:var(–accent);box-shadow:0 0 12px rgba(200,255,0,.25)}
+.progress-step .lbl{font-size:.58rem;color:var(–text3)}
+.progress-step.done .lbl,.progress-step.current .lbl{color:var(–text2)}
+
+/* Photo feed */
+.photo-feed{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+.photo-feed-item{aspect-ratio:4/3;border-radius:8px;overflow:hidden;position:relative;background:var(–bg3)}
+.photo-feed-item img{width:100%;height:100%;object-fit:cover;filter:brightness(.85)}
+.photo-feed-item .date{position:absolute;bottom:4px;right:6px;font-size:.55rem;color:rgba(255,255,255,.5);font-family:var(–fm)}
+
+/* Budget tracker */
+.budget-bar{margin:12px 0}
+.budget-header{display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:6px}
+.budget-header .spent{color:var(–accent);font-weight:600;font-family:var(–fm)}
+.budget-header .total{color:var(–text3)}
+.budget-track{height:8px;background:var(–bg3);border-radius:99px;overflow:hidden}
+.budget-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(–accent),var(–gold));transition:width 1.5s ease}
+.budget-items{margin-top:10px;display:flex;flex-direction:column;gap:4px}
+.budget-row{display:flex;justify-content:space-between;font-size:.72rem;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.budget-row .cat{color:var(–text2)}
+.budget-row .amt{font-family:var(–fm);font-weight:500}
+.budget-row .amt.over{color:var(–red)}
+
+/* Documents */
+.doc-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.doc-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(–bg3);border-radius:8px;font-size:.75rem;transition:background .2s}
+.doc-item:hover{background:var(–bg4)}
+.doc-item .ico{font-size:1rem}
+.doc-item .name{flex:1;font-weight:500}
+.doc-item .size{color:var(–text3);font-size:.65rem;font-family:var(–fm)}
+
+/* Messages */
+.msg-thread{display:flex;flex-direction:column;gap:8px;margin-top:8px;max-height:200px;overflow-y:auto}
+.msg{display:flex;gap:8px;align-items:flex-start}
+.msg-avatar{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.6rem;font-weight:700;flex-shrink:0}
+.msg-avatar.pm{background:rgba(200,255,0,.1);color:var(–accent)}
+.msg-avatar.client{background:rgba(0,180,216,.1);color:var(–blue)}
+.msg-bubble{background:var(–bg3);border-radius:10px;padding:8px 10px;font-size:.75rem;line-height:1.5;max-width:85%}
+.msg-time{font-size:.55rem;color:var(–text3);margin-top:2px;font-family:var(–fm)}
+
+/* ══════════════════════════════════════════════
+2. AI SCOPING WIZARD
+══════════════════════════════════════════════ */
+.wizard-container{max-width:700px;margin:0 auto}
+.wizard-box{background:var(–surface);border:1px solid rgba(200,255,0,.06);border-radius:var(–rl);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.wizard-progress{display:flex;padding:14px 20px;background:var(–bg3);gap:4px}
+.wizard-pip{flex:1;height:3px;border-radius:99px;background:var(–bg4);transition:background .3s}
+.wizard-pip.done{background:var(–accent)}
+.wizard-pip.current{background:var(–accent);box-shadow:0 0 8px rgba(200,255,0,.3)}
+.wizard-step{padding:28px 24px;display:none}
+.wizard-step.active{display:block}
+.wizard-q{font-size:1.1rem;font-weight:700;margin-bottom:4px}
+.wizard-hint{font-size:.78rem;color:var(–text3);margin-bottom:20px}
+.wizard-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.wizard-opt{padding:14px 12px;border:1.5px solid rgba(255,255,255,.06);border-radius:var(–r);text-align:center;cursor:pointer;transition:all .2s;font-size:.82rem;font-weight:500;color:var(–text2)}
+.wizard-opt:hover{border-color:rgba(200,255,0,.2);background:rgba(200,255,0,.02)}
+.wizard-opt.selected{border-color:var(–accent);background:rgba(200,255,0,.05);color:var(–accent)}
+.wizard-opt .ico{font-size:1.4rem;margin-bottom:6px;display:block}
+.wizard-nav{display:flex;gap:10px;margin-top:24px}
+.wizard-nav .btn{flex:1;justify-content:center}
+/* Wizard result */
+.wizard-result{padding:28px 24px;display:none}
+.wizard-result.active{display:block}
+.wr-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.wr-icon{width:48px;height:48px;border-radius:12px;background:rgba(200,255,0,.08);display:grid;place-items:center;font-size:1.5rem}
+.wr-title{font-size:1.1rem;font-weight:700}
+.wr-sub{font-size:.78rem;color:var(–text3)}
+.wr-section{margin-bottom:16px}
+.wr-section-title{font-size:.72rem;color:var(–text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-family:var(–fm)}
+.wr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wr-item{display:flex;justify-content:space-between;padding:8px 12px;background:var(–bg3);border-radius:8px;font-size:.82rem}
+.wr-item .cat{color:var(–text2)}
+.wr-item .val{font-family:var(–fm);font-weight:600;color:var(–accent)}
+.wr-total{display:flex;justify-content:space-between;padding:14px 16px;background:rgba(200,255,0,.05);border:1px solid rgba(200,255,0,.1);border-radius:var(–r);margin-top:12px}
+.wr-total .cat{font-weight:700;font-size:.95rem}
+.wr-total .val{font-family:var(–fm);font-weight:800;font-size:1.2rem;color:var(–accent)}
+.wr-mood{display:flex;gap:6px;margin-top:12px}
+.wr-mood-item{flex:1;aspect-ratio:1;border-radius:10px;background:var(–bg3);display:grid;place-items:center;font-size:1.5rem;opacity:.5}
+
+/* ══════════════════════════════════════════════
+3. INTERACTIVE PROJECT MAP
+══════════════════════════════════════════════ */
+.map-container{position:relative;border-radius:var(–rl);overflow:hidden;background:var(–surface);border:1px solid rgba(255,255,255,.04);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.map-viewport{position:relative;aspect-ratio:16/9;background:#0a0f0a;overflow:hidden}
+/* SVG-based simplified SoCal map */
+.map-svg{width:100%;height:100%}
+.map-pin{cursor:pointer;transition:transform .2s ease}
+.map-pin:hover{transform:scale(1.3)}
+.map-pin circle.outer{fill:rgba(200,255,0,.15);stroke:none}
+.map-pin circle.inner{fill:var(–accent);stroke:var(–bg);stroke-width:1.5}
+.map-pin.active circle.outer{fill:rgba(200,255,0,.3);r:14}
+.map-pin.active circle.inner{r:6}
+
+/* Map popup */
+.map-popup{position:absolute;z-index:20;background:var(–surface2);border:1px solid rgba(200,255,0,.1);border-radius:var(–r);padding:14px;width:260px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;pointer-events:auto}
+.map-popup.show{display:block}
+.map-popup-close{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(–bg3);display:grid;place-items:center;font-size:.7rem;color:var(–text3)}
+.map-popup h4{font-size:.9rem;font-weight:700;margin-bottom:2px}
+.map-popup .meta{font-size:.7rem;color:var(–text3);margin-bottom:8px}
+.map-popup .preview{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px}
+.map-popup .preview-img{aspect-ratio:4/3;border-radius:6px;background:var(–bg3);display:grid;place-items:center;font-size:1rem;opacity:.4;position:relative;overflow:hidden}
+.map-popup .preview-img .lbl{position:absolute;bottom:2px;left:4px;font-size:.5rem;color:rgba(255,255,255,.4);font-family:var(–fm)}
+.map-popup .cost{font-family:var(–fm);color:var(–accent);font-weight:700;font-size:.85rem}
+.map-popup .quote{font-style:italic;font-size:.72rem;color:var(–text2);margin-top:6px;line-height:1.5}
+
+.map-filters{display:flex;gap:6px;padding:12px 16px;border-top:1px solid rgba(255,255,255,.04);flex-wrap:wrap}
+.map-filter{padding:5px 14px;border-radius:99px;font-size:.7rem;font-weight:600;border:1px solid rgba(255,255,255,.06);color:var(–text3);cursor:pointer;transition:all .2s}
+.map-filter.active,.map-filter:hover{border-color:var(–accent);color:var(–accent);background:rgba(200,255,0,.04)}
+.map-legend{display:flex;gap:16px;padding:0 16px 12px;font-size:.65rem;color:var(–text3)}
+.map-legend-item{display:flex;align-items:center;gap:4px}
+.map-legend-dot{width:8px;height:8px;border-radius:50%}
+
+/* ══════════════════════════════════════════════
+4. PRICE TRANSPARENCY MATRIX
+══════════════════════════════════════════════ */
+.matrix-tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+.matrix-tab{padding:8px 18px;border-radius:99px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.06);color:var(–text3);cursor:pointer;transition:all .2s}
+.matrix-tab.active{border-color:var(–accent);color:var(–accent);background:rgba(200,255,0,.04)}
+.matrix-table{width:100%;border-collapse:separate;border-spacing:0;background:var(–surface);border-radius:var(–rl);overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.matrix-table th{padding:14px 16px;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(–text3);background:var(–bg3);font-family:var(–fm);font-weight:500;border-bottom:1px solid rgba(255,255,255,.04)}
+.matrix-table th:not(:first-child){text-align:center}
+.matrix-table td{padding:12px 16px;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.03);color:var(–text2)}
+.matrix-table td:not(:first-child){text-align:center;font-family:var(–fm);font-size:.78rem}
+.matrix-table tr:last-child td{border-bottom:none;font-weight:700;color:var(–text);background:rgba(200,255,0,.03);font-size:.9rem}
+.matrix-table tr:last-child td:not(:first-child){color:var(–accent)}
+.matrix-table tr:hover td{background:rgba(255,255,255,.01)}
+.matrix-table .tier-header{font-weight:700;color:var(–text)}
+.tier-standard{color:var(–text2)}
+.tier-mid{color:var(–gold)}
+.tier-premium{color:var(–accent)}
+.matrix-includes{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.matrix-includes{grid-template-columns:1fr}}
+.matrix-inc-card{padding:16px;background:var(–surface);border:1px solid rgba(255,255,255,.04);border-radius:var(–r)}
+.matrix-inc-card h5{font-size:.78rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.matrix-inc-card ul{font-size:.78rem;color:var(–text3);line-height:2}
+.matrix-inc-card ul li::before{content:’✓ ’;color:var(–green)}
+.matrix-exc-card ul li::before{content:’✕ ’;color:var(–red)}
+
+/* ══════════════════════════════════════════════
+5. MEET YOUR PM
+══════════════════════════════════════════════ */
+.pm-container{max-width:640px;margin:0 auto}
+.pm-card{background:var(–surface);border:1px solid rgba(200,255,0,.08);border-radius:var(–rl);padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.pm-success{font-size:2.5rem;margin-bottom:12px}
+.pm-card h3{font-size:1.2rem;font-weight:700;margin-bottom:4px}
+.pm-card .subtitle{color:var(–text3);font-size:.85rem;margin-bottom:24px}
+.pm-profile{display:flex;align-items:center;gap:20px;padding:20px;background:var(–bg3);border-radius:var(–r);text-align:left;margin-bottom:20px}
+.pm-avatar{width:72px;height:72px;border-radius:50%;background:rgba(200,255,0,.08);border:2px solid rgba(200,255,0,.15);display:grid;place-items:center;font-size:1.6rem;font-weight:800;color:var(–accent);font-family:var(–fm);flex-shrink:0}
+.pm-info h4{font-size:1.05rem;font-weight:700;margin-bottom:2px}
+.pm-info .role{color:var(–accent);font-size:.78rem;font-weight:600;margin-bottom:6px}
+.pm-info .bio{color:var(–text3);font-size:.78rem;line-height:1.5}
+.pm-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.pm-stat{padding:12px;background:var(–bg3);border-radius:8px;text-align:center}
+.pm-stat .num{font-family:var(–fm);font-size:1.1rem;font-weight:700;color:var(–accent)}
+.pm-stat .lbl{font-size:.65rem;color:var(–text3);margin-top:2px}
+.pm-certs{display:flex;justify-content:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.pm-cert{font-size:.62rem;padding:4px 10px;background:rgba(200,255,0,.05);border:1px solid rgba(200,255,0,.08);border-radius:99px;color:var(–accent)}
+.pm-actions{display:flex;gap:8px}
+.pm-actions .btn{flex:1;justify-content:center}
+
+/* ══════════════════════════════════════════════
+6. LIVE BUILD FEED
+══════════════════════════════════════════════ */
+.live-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+@media(max-width:768px){.live-grid{grid-template-columns:1fr}}
+.live-card{background:var(–surface);border:1px solid rgba(255,255,255,.04);border-radius:var(–rl);overflow:hidden;transition:all .3s}
+.live-card:hover{border-color:rgba(200,255,0,.1);transform:translateY(-2px)}
+.live-card-img{aspect-ratio:16/9;background:var(–bg3);position:relative;overflow:hidden;display:grid;place-items:center}
+.live-card-img .emoji{font-size:2.5rem;opacity:.3}
+.live-badge{position:absolute;top:8px;left:8px}
+.live-card-body{padding:16px}
+.live-card-body h4{font-size:.92rem;font-weight:700;margin-bottom:4px}
+.live-card-body .loc{font-size:.72rem;color:var(–text3);margin-bottom:12px}
+.live-progress{margin-bottom:8px}
+.live-progress-header{display:flex;justify-content:space-between;font-size:.7rem;margin-bottom:4px}
+.live-progress-header .phase{color:var(–accent);font-weight:600}
+.live-progress-header .week{color:var(–text3)}
+.live-progress-bar{height:4px;background:var(–bg3);border-radius:99px;overflow:hidden}
+.live-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(–accent),var(–gold))}
+.live-card-footer{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;color:var(–text3);padding-top:8px;border-top:1px solid rgba(255,255,255,.03)}
+.live-card-footer .cost{font-family:var(–fm);color:var(–accent);font-weight:600}
+
+/* ══════════════════════════════════════════════
+7. ADU ROI CALCULATOR
+══════════════════════════════════════════════ */
+.roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+@media(max-width:900px){.roi-grid{grid-template-columns:1fr}}
+.roi-form{background:var(–surface);border:1px solid rgba(255,255,255,.04);border-radius:var(–rl);padding:28px}
+.roi-group{margin-bottom:14px}
+.roi-group label{display:block;font-size:.72rem;color:var(–text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;font-weight:500}
+.roi-group input,.roi-group select{width:100%;background:var(–bg3);border:1px solid rgba(255,255,255,.05);border-radius:var(–r);padding:10px 14px;color:var(–text);font-size:.85rem}
+.roi-group select option{background:var(–bg2)}
+.roi-group input:focus,.roi-group select:focus{border-color:rgba(200,255,0,.25)}
+.roi-result{background:var(–surface);border:1px solid rgba(200,255,0,.08);border-radius:var(–rl);padding:28px;display:none}
+.roi-result.show{display:block}
+.roi-hero-stat{text-align:center;margin-bottom:20px;padding:20px;background:rgba(200,255,0,.03);border-radius:var(–r);border:1px solid rgba(200,255,0,.06)}
+.roi-hero-stat .val{font-family:var(–fm);font-size:2.4rem;font-weight:800;color:var(–accent)}
+.roi-hero-stat .lbl{font-size:.78rem;color:var(–text3);margin-top:4px}
+.roi-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.roi-metric{padding:12px;background:var(–bg3);border-radius:8px;text-align:center}
+.roi-metric .val{font-family:var(–fm);font-size:1rem;font-weight:700;color:var(–text)}
+.roi-metric .lbl{font-size:.65rem;color:var(–text3);margin-top:2px}
+.roi-bar-chart{margin-top:12px}
+.roi-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.roi-bar-label{width:80px;font-size:.7rem;color:var(–text3);text-align:right;flex-shrink:0}
+.roi-bar-track{flex:1;height:16px;background:var(–bg3);border-radius:4px;overflow:hidden;position:relative}
+.roi-bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.roi-bar-val{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.6rem;font-family:var(–fm);color:rgba(255,255,255,.7)}
+
+/* ══════════════════════════════════════════════
+8. COMPETITOR COMPARISON
+══════════════════════════════════════════════ */
+.compare-table{width:100%;border-collapse:separate;border-spacing:0;background:var(–surface);border-radius:var(–rl);overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.compare-table th{padding:14px 16px;font-size:.75rem;color:var(–text3);background:var(–bg3);border-bottom:1px solid rgba(255,255,255,.04)}
+.compare-table th:first-child{text-align:left}
+.compare-table th:nth-child(2){color:var(–accent);font-weight:700}
+.compare-table td{padding:12px 16px;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.03);text-align:center}
+.compare-table td:first-child{text-align:left;color:var(–text2);font-weight:500}
+.compare-table .check{color:var(–green);font-size:1rem}
+.compare-table .x{color:var(–text3);font-size:.8rem;opacity:.4}
+.compare-table .partial{color:var(–gold);font-size:.75rem}
+.compare-table td:nth-child(2){background:rgba(200,255,0,.02)}
+</style>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     1. CLIENT PROJECT PORTAL DEMO
+     ═══════════════════════════════════════ -->
+
+<section class="section" id="portal">
+  <div class="container">
+    <div class="portal-grid">
+      <div>
+        <div class="slabel">Client Experience</div>
+        <div class="stitle">Your Project, <em>Your Dashboard</em></div>
+        <p class="ssub">Every X Construction client gets a real-time project portal from day one. Track progress, view photos, monitor your budget, and message your PM — all in one place.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:.85rem"><span style="color:var(--green)">✓</span> Daily job site photo updates</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.85rem"><span style="color:var(--green)">✓</span> Live budget vs. estimate tracking</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.85rem"><span style="color:var(--green)">✓</span> All docs in one place — contract, plans, permits</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.85rem"><span style="color:var(--green)">✓</span> Direct messaging with your project manager</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.85rem"><span style="color:var(--green)">✓</span> Change order tracking with approval history</div>
+        </div>
+      </div>
+      <div class="portal-demo fade-in">
+        <div class="portal-bar">
+          <div class="portal-dot" style="background:#ff5f57"></div>
+          <div class="portal-dot" style="background:#ffbd2e"></div>
+          <div class="portal-dot" style="background:#28ca42"></div>
+          <span class="portal-bar-title">X Client Portal — Martinez Kitchen Remodel</span>
+        </div>
+        <div class="portal-nav">
+          <button class="active" onclick="showPortal('progress',this)">📊 Progress</button>
+          <button onclick="showPortal('photos',this)">📸 Photos</button>
+          <button onclick="showPortal('budget',this)">💰 Budget</button>
+          <button onclick="showPortal('docs',this)">📁 Docs</button>
+          <button onclick="showPortal('msgs',this)">💬 Messages</button>
+        </div>
+        <div class="portal-body">
+          <!-- Progress Panel -->
+          <div class="portal-panel active" id="pp-progress">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div><div style="font-weight:700;font-size:.9rem">Kitchen Remodel — Pasadena</div><div style="font-size:.7rem;color:var(--text3)">Started Feb 10 · Est. completion Apr 7</div></div>
+              <span class="tag tag-green">● On Track</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-step done"><div class="dot">✓</div><div class="lbl">Design</div></div>
+              <div class="progress-step done"><div class="dot">✓</div><div class="lbl">Permits</div></div>
+              <div class="progress-step done"><div class="dot">✓</div><div class="lbl">Demo</div></div>
+              <div class="progress-step done"><div class="dot">✓</div><div class="lbl">Rough</div></div>
+              <div class="progress-step current"><div class="dot">5</div><div class="lbl">Tile</div></div>
+              <div class="progress-step"><div class="dot">6</div><div class="lbl">Cabinets</div></div>
+              <div class="progress-step"><div class="dot">7</div><div class="lbl">Finish</div></div>
+              <div class="progress-step"><div class="dot">8</div><div class="lbl">Inspect</div></div>
+            </div>
+            <div style="padding:12px;background:var(--bg3);border-radius:8px;margin-top:16px">
+              <div style="font-size:.75rem;font-weight:600;margin-bottom:4px">📋 Current Phase: Tile Installation</div>
+              <div style="font-size:.72rem;color:var(--text3);line-height:1.6">Backsplash tile (Calacatta hex) installed on north wall. Grout scheduled for tomorrow. Floor tile (large format porcelain) begins Monday. PM Roberto confirmed on-schedule.</div>
+            </div>
+          </div>
+          <!-- Photos Panel -->
+          <div class="portal-panel" id="pp-photos">
+            <div style="font-weight:600;font-size:.85rem;margin-bottom:10px">📸 Latest Photos — Week 4</div>
+            <div class="photo-feed">
+              <div class="photo-feed-item"><img src="https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=300&q=60" alt="Demo"><div class="date">Mar 18</div></div>
+              <div class="photo-feed-item"><img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&q=60" alt="Rough"><div class="date">Mar 20</div></div>
+              <div class="photo-feed-item"><img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&q=60" alt="Tile"><div class="date">Mar 22</div></div>
+              <div class="photo-feed-item"><img src="https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=300&q=60" alt="Tile 2"><div class="date">Mar 24</div></div>
+            </div>
+          </div>
+          <!-- Budget Panel -->
+          <div class="portal-panel" id="pp-budget">
+            <div style="font-weight:600;font-size:.85rem;margin-bottom:10px">💰 Budget Tracker</div>
+            <div class="budget-bar">
+              <div class="budget-header"><span>Spent: <span class="spent">$51,200</span></span><span class="total">Budget: $87,000</span></div>
+              <div class="budget-track"><div class="budget-fill" style="width:59%"></div></div>
+            </div>
+            <div style="font-size:.68rem;color:var(--text3);margin-bottom:12px">59% spent · 41% remaining · $0 over budget</div>
+            <div class="budget-items">
+              <div class="budget-row"><span class="cat">Demo & Disposal</span><span class="amt">$4,200</span></div>
+              <div class="budget-row"><span class="cat">Plumbing Rough</span><span class="amt">$6,800</span></div>
+              <div class="budget-row"><span class="cat">Electrical</span><span class="amt">$5,400</span></div>
+              <div class="budget-row"><span class="cat">Tile Materials</span><span class="amt">$7,200</span></div>
+              <div class="budget-row"><span class="cat">Tile Labor</span><span class="amt">$4,600</span></div>
+              <div class="budget-row"><span class="cat">Cabinets (deposit)</span><span class="amt">$12,000</span></div>
+              <div class="budget-row"><span class="cat">Countertops (deposit)</span><span class="amt">$5,500</span></div>
+              <div class="budget-row"><span class="cat">Project Management</span><span class="amt">$5,500</span></div>
+            </div>
+          </div>
+          <!-- Docs Panel -->
+          <div class="portal-panel" id="pp-docs">
+            <div style="font-weight:600;font-size:.85rem;margin-bottom:10px">📁 Project Documents</div>
+            <div class="doc-list">
+              <div class="doc-item"><span class="ico">📄</span><span class="name">Contract — Martinez Kitchen.pdf</span><span class="size">2.4 MB</span></div>
+              <div class="doc-item"><span class="ico">📐</span><span class="name">Architectural Plans v3.pdf</span><span class="size">8.1 MB</span></div>
+              <div class="doc-item"><span class="ico">📋</span><span class="name">LA County Permit — Approved.pdf</span><span class="size">1.2 MB</span></div>
+              <div class="doc-item"><span class="ico">🧾</span><span class="name">Change Order #1 — Approved.pdf</span><span class="size">340 KB</span></div>
+              <div class="doc-item"><span class="ico">📊</span><span class="name">Material Selections Sheet.xlsx</span><span class="size">890 KB</span></div>
+              <div class="doc-item"><span class="ico">🛡️</span><span class="name">Insurance Certificate.pdf</span><span class="size">520 KB</span></div>
+            </div>
+          </div>
+          <!-- Messages Panel -->
+          <div class="portal-panel" id="pp-msgs">
+            <div style="font-weight:600;font-size:.85rem;margin-bottom:10px">💬 Project Chat</div>
+            <div class="msg-thread">
+              <div class="msg"><div class="msg-avatar pm">RP</div><div><div class="msg-bubble">Good morning Maria! Tile crew finished the backsplash. Looks incredible — photos uploading now. Grout color is "Warm Gray" as selected. 👍</div><div class="msg-time">Today, 9:14 AM</div></div></div>
+              <div class="msg"><div class="msg-avatar client">MR</div><div><div class="msg-bubble">Looks amazing Roberto! Quick question — is it possible to add an extra outlet behind where the coffee station will go?</div><div class="msg-time">Today, 10:02 AM</div></div></div>
+              <div class="msg"><div class="msg-avatar pm">RP</div><div><div class="msg-bubble">Absolutely! That's a simple add since the wall is still open. I'll write it up as a change order — should be around $350. I'll send the CO for your approval in the portal.</div><div class="msg-time">Today, 10:15 AM</div></div></div>
+              <div class="msg"><div class="msg-avatar client">MR</div><div><div class="msg-bubble">Perfect, approved! Thanks for the quick response 🙌</div><div class="msg-time">Today, 10:22 AM</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- ═══════════════════════════════════════
+     2. AI SCOPING WIZARD
+     ═══════════════════════════════════════ -->
+
+<section class="section section-alt" id="wizard">
+  <div class="container">
+    <div style="text-align:center;display:flex;flex-direction:column;align-items:center;margin-bottom:32px">
+      <div class="slabel" style="justify-content:center">AI-Powered</div>
+      <div class="stitle">Design Your Project in <em>60 Seconds</em></div>
+      <p class="ssub" style="text-align:center">Our AI wizard walks you through your preferences and generates a personalized estimate with material selections — no phone call needed.</p>
+    </div>
+    <div class="wizard-container">
+      <div class="wizard-box">
+        <div class="wizard-progress" id="wizPips">
+          <div class="wizard-pip current"></div>
+          <div class="wizard-pip"></div>
+          <div class="wizard-pip"></div>
+          <div class="wizard-pip"></div>
+          <div class="wizard-pip"></div>
+        </div>
+        <!-- Step 1: Room -->
+        <div class="wizard-step active" id="ws1">
+          <div class="wizard-q">What room are you remodeling?</div>
+          <div class="wizard-hint">Select one to continue</div>
+          <div class="wizard-options" id="wo1">
+            <div class="wizard-opt" onclick="wizSelect(this,'room','kitchen')"><span class="ico">🍳</span>Kitchen</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'room','bathroom')"><span class="ico">🛁</span>Bathroom</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'room','living')"><span class="ico">🛋️</span>Living Room</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'room','bedroom')"><span class="ico">🛏️</span>Bedroom</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'room','outdoor')"><span class="ico">🌿</span>Outdoor</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'room','full')"><span class="ico">🏠</span>Full Home</div>
+          </div>
+          <div class="wizard-nav"><button class="btn btn-p" onclick="wizNext(2)">Next →</button></div>
+        </div>
+        <!-- Step 2: Style -->
+        <div class="wizard-step" id="ws2">
+          <div class="wizard-q">What style do you want?</div>
+          <div class="wizard-hint">Pick the vibe that speaks to you</div>
+          <div class="wizard-options" id="wo2">
+            <div class="wizard-opt" onclick="wizSelect(this,'style','modern')"><span class="ico">◻️</span>Modern</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'style','farmhouse')"><span class="ico">🌾</span>Farmhouse</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'style','transitional')"><span class="ico">🔲</span>Transitional</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'style','minimalist')"><span class="ico">▫️</span>Minimalist</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'style','luxury')"><span class="ico">💎</span>Luxury</div>
+            <div class="wizard-opt" onclick="wizSelect(this,'style','mediterranean')"><span class="ico">🌊</span>Mediterranean</div>
+          </div>
+          <div class="wizard-nav"><button class="btn btn-o" onclick="wizNext(1)">← Back</button><button class="btn btn-p" onclick="wizNext(3)">Next →</button></div>
+        </div>
+        <!-- Step 3: Countertops -->
+        <div class="wizard-step" id="ws3">
+          <div class="wizard-q">Countertop material?</div>
+          <div class="wizard-hint">This is the biggest visual impact in a kitchen</div>
+          <div class="wizard-options" id="wo3">
+            <div class="wizard-opt" onclick="wizSelect(this,'counter','laminate')"><span class="ico">🟫</span>Laminate<div style="font-size:.6rem;color:var(--text3);margin-top:2px">$$</div></div>
+            <div class="wizard-opt" onclick="wizSelect(this,'counter','quartz')"><span class="ico">⬜</span>Quartz<div style="font-size:.6rem;color:var(--text3);margin-top:2px">$$$</div></div>
+            <div class="wizard-opt" onclick="wizSelect(this,'counter','granite')"><span class="ico">🪨</span>Granite<div style="font-size:.6rem;color:var(--text3);margin-top:2px">$$$</div></div>
+            <div class="wizard-opt" onclick="wizSelect(this,'counter','marble')"><span class="ico">🤍</span>Marble<div style="font-size:.6rem;color:var(--text3);margin-top:2px">$$$$</div></div>
+          </div>
+          <div class="wizard-nav"><button class="btn btn-o" onclick="wizNext(2)">← Back</button><button class="btn btn-p" onclick="wizNext(4)">Next →</button></div>
+        </div>
+        <!-- Step 4: Size -->
+        <div class="wizard-step" id="ws4">
+          <div class="wizard-q">Project size & location?</div>
+          <div class="wizard-hint">This helps us calibrate pricing for your area</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="roi-group"><label>Square feet</label><input type="number" id="wizSqft" placeholder="e.g. 200" value="200"></div>
+            <div class="roi-group"><label>County</label><select id="wizCounty"><option value="la">Los Angeles</option><option value="sb">San Bernardino</option><option value="oc">Orange County</option><option value="rv">Riverside</option></select></div>
+          </div>
+          <div class="wizard-nav"><button class="btn btn-o" onclick="wizNext(3)">← Back</button><button class="btn btn-p" onclick="wizNext(5)">Next →</button></div>
+        </div>
+        <!-- Step 5: Tier -->
+        <div class="wizard-step" id="ws5">
+          <div class="wizard-q">Quality tier?</div>
+          <div class="wizard-hint">This sets the overall material and finish level</div>
+          <div class="wizard-options" id="wo5">
+            <div class="wizard-opt" onclick="wizSelect(this,'tier','standard')"><span class="ico">🔵</span>Standard<div style="font-size:.6rem;color:var(--text3);margin-top:2px">Best value</div></div>
+            <div class="wizard-opt" onclick="wizSelect(this,'tier','mid')"><span class="ico">🟡</span>Mid-Range<div style="font-size:.6rem;color:var(--text3);margin-top:2px">Most popular</div></div>
+            <div class="wizard-opt" onclick="wizSelect(this,'tier','premium')"><span class="ico">💎</span>Premium<div style="font-size:.6rem;color:var(--text3);margin-top:2px">Luxury finishes</div></div>
+          </div>
+          <div class="wizard-nav"><button class="btn btn-o" onclick="wizNext(4)">← Back</button><button class="btn btn-p" onclick="wizGenerate()">⚡ Generate My Estimate</button></div>
+        </div>
+        <!-- Result -->
+        <div class="wizard-result" id="wizResult">
+          <div class="wr-header"><div class="wr-icon">📋</div><div><div class="wr-title">Your Custom Estimate</div><div class="wr-sub">Based on your selections · SoCal market data · 500+ projects</div></div></div>
+          <div class="wr-section">
+            <div class="wr-section-title">Your Selections</div>
+            <div class="wr-grid" id="wizSelections"></div>
+          </div>
+          <div class="wr-section">
+            <div class="wr-section-title">Cost Breakdown</div>
+            <div id="wizBreakdown"></div>
+          </div>
+          <div class="wr-total"><span class="cat">Estimated Total</span><span class="val" id="wizTotal">$0</span></div>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:10px;padding:10px;background:rgba(200,255,0,.03);border-radius:8px;line-height:1.6">⚠️ This estimate is for planning purposes, based on your selections and current SoCal market data. Your free on-site consultation provides a guaranteed, all-inclusive quote.</div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <a href="#" class="btn btn-p" style="flex:1;justify-content:center">📞 Schedule Free Consultation</a>
+            <button class="btn btn-o" onclick="wizReset()" style="flex:.6;justify-content:center">↺ Start Over</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- ═══════════════════════════════════════
+     3. LIVE BUILD FEED
+     ═══════════════════════════════════════ -->
+
+<section class="section" id="live-feed">
+  <div class="container">
+    <div class="slabel">Happening Now</div>
+    <div class="stitle">What We're <em>Building Right Now</em></div>
+    <p class="ssub">Real projects, real-time progress. Updated weekly with photos and milestones from active job sites.</p>
+    <div class="live-grid">
+      <div class="live-card fade-in">
+        <div class="live-card-img"><span class="emoji">🍳</span><div class="live-badge"><span class="tag tag-green">● Active</span></div></div>
+        <div class="live-card-body">
+          <h4>Kitchen Remodel — Pasadena</h4>
+          <div class="loc">📍 South Pasadena, CA · Martinez Family</div>
+          <div class="live-progress">
+            <div class="live-progress-header"><span class="phase">Phase 5/8 — Tile</span><span class="week">Week 4 of 8</span></div>
+            <div class="live-progress-bar"><div class="live-progress-fill" style="width:62%"></div></div>
+          </div>
+          <div class="live-card-footer"><span>Last updated: Today</span><span class="cost">$87,000</span></div>
+        </div>
+      </div>
+      <div class="live-card fade-in">
+        <div class="live-card-img"><span class="emoji">🏠</span><div class="live-badge"><span class="tag tag-green">● Active</span></div></div>
+        <div class="live-card-body">
+          <h4>ADU Build — Rancho Cucamonga</h4>
+          <div class="loc">📍 RC, CA · Thompson Family</div>
+          <div class="live-progress">
+            <div class="live-progress-header"><span class="phase">Phase 6/10 — Framing</span><span class="week">Month 4 of 7</span></div>
+            <div class="live-progress-bar"><div class="live-progress-fill" style="width:55%"></div></div>
+          </div>
+          <div class="live-card-footer"><span>Last updated: Yesterday</span><span class="cost">$195,000</span></div>
+        </div>
+      </div>
+      <div class="live-card fade-in">
+        <div class="live-card-img"><span class="emoji">🏢</span><div class="live-badge"><span class="tag tag-blue">● Finishing</span></div></div>
+        <div class="live-card-body">
+          <h4>Restaurant Build-Out — Irvine</h4>
+          <div class="loc">📍 Irvine, CA · Kim Hospitality Group</div>
+          <div class="live-progress">
+            <div class="live-progress-header"><span class="phase">Phase 9/10 — Final Inspection</span><span class="week">Week 14 of 16</span></div>
+            <div class="live-progress-bar"><div class="live-progress-fill" style="width:88%"></div></div>
+          </div>
+          <div class="live-card-footer"><span>Last updated: 2 days ago</span><span class="cost">$320,000</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- ═══════════════════════════════════════
+     4. PRICE TRANSPARENCY MATRIX
+     ═══════════════════════════════════════ -->
+
+<section class="section section-alt" id="pricing-matrix">
+  <div class="container">
+    <div class="slabel">Full Transparency</div>
+    <div class="stitle">Exactly What You Get, <em>At Every Level</em></div>
+    <p class="ssub">No hidden fees. No surprises. Here's what Standard, Mid-Range, and Premium actually mean — line by line.</p>
+    <div class="matrix-tabs">
+      <button class="matrix-tab active" onclick="showMatrix('kitchen',this)">🍳 Kitchen</button>
+      <button class="matrix-tab" onclick="showMatrix('bath',this)">🛁 Bathroom</button>
+      <button class="matrix-tab" onclick="showMatrix('adu',this)">🏠 ADU</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="matrix-table" id="matrixTable">
+        <thead><tr>
+          <th>Component</th>
+          <th class="tier-standard">Standard</th>
+          <th class="tier-mid">Mid-Range ★</th>
+          <th class="tier-premium">Premium</th>
+        </tr></thead>
+        <tbody id="matrixBody"></tbody>
+      </table>
+    </div>
+    <div class="matrix-includes">
+      <div class="matrix-inc-card">
+        <h5><span style="color:var(--green)">✓</span> Always Included</h5>
+        <ul>
+          <li>Demo & disposal</li>
+          <li>All plumbing & electrical</li>
+          <li>Painting & drywall</li>
+          <li>Project management</li>
+          <li>Permits & inspections</li>
+          <li>Daily cleanup</li>
+          <li>5-year warranty</li>
+        </ul>
+      </div>
+      <div class="matrix-inc-card matrix-exc-card">
+        <h5><span style="color:var(--red)">✕</span> Not Included (Quoted Separately)</h5>
+        <ul>
+          <li>Appliances (unless Premium tier)</li>
+          <li>Structural engineering (if needed)</li>
+          <li>Asbestos/lead abatement (if found)</li>
+          <li>HOA application fees</li>
+          <li>Furniture & decor</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- ═══════════════════════════════════════
+     5. ADU ROI CALCULATOR
+     ═══════════════════════════════════════ -->
+
+<section class="section" id="roi-calc">
+  <div class="container">
+    <div class="slabel">Investment Calculator</div>
+    <div class="stitle">ADU Return on <em>Investment</em></div>
+    <p class="ssub">See exactly how fast an ADU pays for itself. Real rental data, real build costs, real math.</p>
+    <div class="roi-grid">
+      <div class="roi-form fade-in">
+        <div class="roi-group"><label>ADU Size (sqft)</label><input type="number" id="roiSqft" value="600" oninput="calcROI()"></div>
+        <div class="roi-group"><label>County</label><select id="roiCounty" onchange="calcROI()"><option value="la">Los Angeles</option><option value="sb">San Bernardino</option><option value="oc">Orange County</option><option value="rv">Riverside</option></select></div>
+        <div class="roi-group"><label>Quality Tier</label><select id="roiTier" onchange="calcROI()"><option value="standard">Standard ($250/sqft)</option><option value="mid" selected>Mid-Range ($350/sqft)</option><option value="premium">Premium ($500/sqft)</option></select></div>
+        <div class="roi-group"><label>Estimated Monthly Rent</label><input type="number" id="roiRent" value="2200" oninput="calcROI()"></div>
+        <div class="roi-group"><label>Financing Term (months)</label><select id="roiTerm" onchange="calcROI()"><option value="120" selected>120 months (10 yr)</option><option value="180">180 months (15 yr)</option><option value="240">240 months (20 yr)</option></select></div>
+        <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:8px" onclick="calcROI()">⚡ Calculate ROI</button>
+      </div>
+      <div class="roi-result show fade-in" id="roiResult">
+        <div class="roi-hero-stat">
+          <div class="val" id="roiPayback">8.2 yrs</div>
+          <div class="lbl">Full Payback Period</div>
+        </div>
+        <div class="roi-metrics">
+          <div class="roi-metric"><div class="val" id="roiBuildCost">$210,000</div><div class="lbl">Build Cost</div></div>
+          <div class="roi-metric"><div class="val" id="roiMonthlyRent">$2,200/mo</div><div class="lbl">Monthly Rent</div></div>
+          <div class="roi-metric"><div class="val" id="roiAnnualIncome">$26,400/yr</div><div class="lbl">Annual Income</div></div>
+          <div class="roi-metric"><div class="val" id="roiMonthlyPmt">$1,960/mo</div><div class="lbl">Loan Payment</div></div>
+        </div>
+        <div style="padding:12px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.1);border-radius:8px;margin-bottom:14px;text-align:center">
+          <div style="font-size:.82rem;color:var(--green);font-weight:600">Monthly Cash Flow: +<span id="roiCashflow">$240</span>/mo</div>
+          <div style="font-size:.68rem;color:var(--text3);margin-top:2px">Rental income minus loan payment</div>
+        </div>
+        <div style="font-size:.78rem;font-weight:600;margin-bottom:8px">5-Year Projection</div>
+        <div class="roi-bar-chart">
+          <div class="roi-bar-row"><div class="roi-bar-label">Year 1</div><div class="roi-bar-track"><div class="roi-bar-fill" style="width:12%;background:var(--accent)"></div><div class="roi-bar-val" id="roiY1">$26K</div></div></div>
+          <div class="roi-bar-row"><div class="roi-bar-label">Year 2</div><div class="roi-bar-track"><div class="roi-bar-fill" style="width:25%;background:var(--accent)"></div><div class="roi-bar-val" id="roiY2">$53K</div></div></div>
+          <div class="roi-bar-row"><div class="roi-bar-label">Year 3</div><div class="roi-bar-track"><div class="roi-bar-fill" style="width:38%;background:var(--accent)"></div><div class="roi-bar-val" id="roiY3">$79K</div></div></div>
+          <div class="roi-bar-row"><div class="roi-bar-label">Year 4</div><div class="roi-bar-track"><div class="roi-bar-fill" style="width:50%;background:var(--gold)"></div><div class="roi-bar-val" id="roiY4">$106K</div></div></div>
+          <div class="roi-bar-row"><div class="roi-bar-label">Year 5</div><div class="roi-bar-track"><div class="roi-bar-fill" style="width:63%;background:var(--green)"></div><div class="roi-bar-val" id="roiY5">$132K</div></div></div>
+        </div>
+        <div style="font-size:.68rem;color:var(--text3);margin-top:10px;line-height:1.6">⚠️ Estimates based on current SoCal rental market data. Actual rental income varies by location, unit quality, and market conditions. Property value increase not included in calculations.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- ═══════════════════════════════════════
+     6. MEET YOUR PM
+     ═══════════════════════════════════════ -->
+
+<section class="section section-alt" id="meet-pm">
+  <div class="container">
+    <div style="text-align:center;display:flex;flex-direction:column;align-items:center;margin-bottom:32px">
+      <div class="slabel" style="justify-content:center">After You Submit</div>
+      <div class="stitle">Your Relationship Starts <em>Immediately</em></div>
+      <p class="ssub" style="text-align:center">This is what you see the moment you submit a consultation request. Not a generic "thanks" — the beginning of a relationship.</p>
+    </div>
+    <div class="pm-container">
+      <div class="pm-card fade-in">
+        <div class="pm-success">✅</div>
+        <h3>Consultation Request Received!</h3>
+        <div class="subtitle">Based on your project (Kitchen Remodel) and location (Pasadena, CA), we've assigned your project manager:</div>
+        <div class="pm-profile">
+          <div class="pm-avatar">RP</div>
+          <div class="pm-info">
+            <h4>Roberto Perez</h4>
+            <div class="role">Senior Project Manager — LA County</div>
+            <div class="bio">15 years managing residential remodels in Los Angeles County. Bilingual (English/Spanish). Personally manages every project from day one through final walkthrough.</div>
+          </div>
+        </div>
+        <div class="pm-stats-row">
+          <div class="pm-stat"><div class="num">47</div><div class="lbl">Projects in LA</div></div>
+          <div class="pm-stat"><div class="num">4.9★</div><div class="lbl">Client Rating</div></div>
+          <div class="pm-stat"><div class="num">98%</div><div class="lbl">On-Time</div></div>
+        </div>
+        <div class="pm-certs">
+          <span class="pm-cert">PMP Certified</span>
+          <span class="pm-cert">EPA Lead-Safe</span>
+          <span class="pm-cert">OSHA 30</span>
+          <span class="pm-cert">Bilingual EN/ES</span>
+        </div>
+        <div class="pm-actions">
+          <a href="tel:+18005551234" class="btn btn-p">📞 Call Roberto Now</a>
+          <a href="#" class="btn btn-o">📅 Book a Call</a>
+        </div>
+        <div style="margin-top:16px;font-size:.75rem;color:var(--text3);text-align:center">Roberto will reach out within 2 hours · Average response time: 47 minutes</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"></div>
+
+<!-- ═══════════════════════════════════════
+     7. COMPETITOR COMPARISON
+     ═══════════════════════════════════════ -->
+
+<section class="section" id="comparison">
+  <div class="container">
+    <div class="slabel">How to Choose</div>
+    <div class="stitle">What to Look For in a <em>Contractor</em></div>
+    <p class="ssub">We believe these are the standards every contractor should meet. Here's how we compare to the industry average.</p>
+    <div style="overflow-x:auto">
+      <table class="compare-table">
+        <thead><tr><th>Feature</th><th>X Construction</th><th>Industry Average</th></tr></thead>
+        <tbody>
+          <tr><td>Published pricing on website</td><td><span class="check">✓</span></td><td><span class="x">✕</span></td></tr>
+          <tr><td>CSLB license verifiable online</td><td><span class="check">✓</span></td><td><span class="partial">Sometimes</span></td></tr>
+          <tr><td>5-year workmanship warranty</td><td><span class="check">✓</span></td><td><span class="partial">1 yr typical</span></td></tr>
+          <tr><td>Real-time client portal</td><td><span class="check">✓</span></td><td><span class="x">✕</span></td></tr>
+          <tr><td>Weekly photo updates</td><td><span class="check">✓</span></td><td><span class="x">✕</span></td></tr>
+          <tr><td>AI-powered instant estimates</td><td><span class="check">✓</span></td><td><span class="x">✕</span></td></tr>
+          <tr><td>Dedicated project manager</td><td><span class="check">✓</span></td><td><span class="partial">Varies</span></td></tr>
+          <tr><td>Change order documentation</td><td><span class="check">✓</span></td><td><span class="partial">Verbal</span></td></tr>
+          <tr><td>No hidden fees guarantee</td><td><span class="check">✓</span></td><td><span class="x">✕</span></td></tr>
+          <tr><td>Responds within 2 hours</td><td><span class="check">✓</span></td><td><span class="partial">1–3 days</span></td></tr>
+          <tr><td>Financing options</td><td><span class="check">✓</span></td><td><span class="partial">Rarely</span></td></tr>
+          <tr><td>Budget tracking transparency</td><td><span class="check">✓</span></td><td><span class="x">✕</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ── Scroll animations ── */
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:.08});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+
+/* ══════════════════════ PORTAL ══════════════════════ */
+function showPortal(panel,btn){
+  document.querySelectorAll('.portal-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pp-'+panel).classList.add('active');
+  document.querySelectorAll('.portal-nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ══════════════════════ WIZARD ══════════════════════ */
+const wizData={room:'',style:'',counter:'',tier:'mid'};
+function wizSelect(el,key,val){
+  wizData[key]=val;
+  el.parentElement.querySelectorAll('.wizard-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function wizNext(step){
+  document.querySelectorAll('.wizard-step').forEach(s=>s.classList.remove('active'));
+  const s=document.getElementById('ws'+step);
+  if(s)s.classList.add('active');
+  document.querySelectorAll('.wizard-pip').forEach((p,i)=>{
+    p.classList.remove('done','current');
+    if(i<step-1)p.classList.add('done');
+    if(i===step-1)p.classList.add('current');
+  });
+}
+function wizGenerate(){
+  document.querySelectorAll('.wizard-step').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.wizard-pip').forEach(p=>p.classList.add('done'));
+  const sqft=parseInt(document.getElementById('wizSqft').value)||200;
+  const county=document.getElementById('wizCounty').value;
+  const cm={la:1.12,sb:1.0,oc:1.15,rv:.95};
+  const tm={standard:250,mid:350,premium:550};
+  const rate=tm[wizData.tier||'mid'];
+  const total=Math.round(sqft*rate*(cm[county]||1));
+  const m=Math.round(total*.4),l=Math.round(total*.32),d=Math.round(total*.08),p=Math.round(total*.08),pm=Math.round(total*.12);
+  document.getElementById('wizSelections').innerHTML=`
+    <div class="wr-item"><span class="cat">Room</span><span class="val">${(wizData.room||'kitchen').charAt(0).toUpperCase()+(wizData.room||'kitchen').slice(1)}</span></div>
+    <div class="wr-item"><span class="cat">Style</span><span class="val">${(wizData.style||'modern').charAt(0).toUpperCase()+(wizData.style||'modern').slice(1)}</span></div>
+    <div class="wr-item"><span class="cat">Countertop</span><span class="val">${(wizData.counter||'quartz').charAt(0).toUpperCase()+(wizData.counter||'quartz').slice(1)}</span></div>
+    <div class="wr-item"><span class="cat">Size</span><span class="val">${sqft} sqft</span></div>
+    <div class="wr-item"><span class="cat">County</span><span class="val">${{la:'Los Angeles',sb:'San Bernardino',oc:'Orange County',rv:'Riverside'}[county]}</span></div>
+    <div class="wr-item"><span class="cat">Tier</span><span class="val">${{standard:'Standard',mid:'Mid-Range',premium:'Premium'}[wizData.tier||'mid']}</span></div>`;
+  document.getElementById('wizBreakdown').innerHTML=`
+    <div class="wr-item"><span class="cat">Materials & Finishes</span><span class="val">$${m.toLocaleString()}</span></div>
+    <div class="wr-item"><span class="cat">Skilled Labor</span><span class="val">$${l.toLocaleString()}</span></div>
+    <div class="wr-item"><span class="cat">Design & Engineering</span><span class="val">$${d.toLocaleString()}</span></div>
+    <div class="wr-item"><span class="cat">Permits & Inspections</span><span class="val">$${p.toLocaleString()}</span></div>
+    <div class="wr-item"><span class="cat">Project Management</span><span class="val">$${pm.toLocaleString()}</span></div>`;
+  document.getElementById('wizTotal').textContent='$'+total.toLocaleString();
+  document.getElementById('wizResult').classList.add('active');
+}
+function wizReset(){
+  document.getElementById('wizResult').classList.remove('active');
+  Object.keys(wizData).forEach(k=>wizData[k]='');
+  document.querySelectorAll('.wizard-opt').forEach(o=>o.classList.remove('selected'));
+  wizNext(1);
+}
+
+/* ══════════════════════ PRICE MATRIX ══════════════════════ */
+const matrices={
+  kitchen:[
+    ['Cabinets','Stock melamine','Semi-custom wood','Full custom hardwood'],
+    ['Countertops','Laminate','Quartz','Natural stone / marble'],
+    ['Backsplash','Basic subway tile','Designer ceramic','Custom mosaic / stone'],
+    ['Flooring','LVP (luxury vinyl)','Engineered hardwood','Natural hardwood'],
+    ['Fixtures','Chrome standard','Brushed nickel mid-tier','Premium (Kohler/Moen)'],
+    ['Lighting','Basic recessed','Recessed + pendants','Full custom lighting plan'],
+    ['Appliances','Not included','Mid-tier package','Wolf / Sub-Zero / Miele'],
+    ['TOTAL (200 sqft)','$50,000 – $65,000','$70,000 – $95,000','$110,000 – $140,000+'],
+  ],
+  bath:[
+    ['Tile','Ceramic (floor only)','Porcelain (floor + walls)','Natural stone throughout'],
+    ['Vanity','Stock 36" single','Semi-custom double','Custom floating / furniture'],
+    ['Shower','Prefab insert','Custom tile (3 walls)','Frameless glass + niche + bench'],
+    ['Fixtures','Chrome standard','Brushed nickel','Luxury (Brizo / Waterworks)'],
+    ['Lighting','Basic vanity bar','Recessed + sconces','Full custom plan + dimmer'],
+    ['Flooring','Ceramic tile','Heated porcelain tile','Heated natural stone'],
+    ['TOTAL (80 sqft)','$18,000 – $25,000','$28,000 – $45,000','$50,000 – $75,000+'],
+  ],
+  adu:[
+    ['Foundation','Standard slab','Raised foundation','Custom + crawl space'],
+    ['Framing','Standard wood frame','Enhanced insulation','Steel + premium insulation'],
+    ['Exterior','Stucco','Stucco + stone accents','Board & batten / custom'],
+    ['Kitchen','Compact galley','Full kitchen w/ island','Gourmet kitchen'],
+    ['Bathroom','Standard bath','Tile shower + modern','Spa-level finishes'],
+    ['Flooring','LVP throughout','Engineered hardwood','Natural hardwood'],
+    ['TOTAL (600 sqft)','$150K – $200K','$210K – $280K','$300K – $380K+'],
+  ]
+};
+function showMatrix(type,btn){
+  document.querySelectorAll('.matrix-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const d=matrices[type];
+  let h='';
+  d.forEach(row=>{
+    h+=`<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td></tr>`;
+  });
+  document.getElementById('matrixBody').innerHTML=h;
+}
+showMatrix('kitchen',document.querySelector('.matrix-tab'));
+
+/* ══════════════════════ ROI CALCULATOR ══════════════════════ */
+function calcROI(){
+  const sqft=parseInt(document.getElementById('roiSqft').value)||600;
+  const county=document.getElementById('roiCounty').value;
+  const tier=document.getElementById('roiTier').value;
+  const rent=parseInt(document.getElementById('roiRent').value)||2200;
+  const term=parseInt(document.getElementById('roiTerm').value)||120;
+  const cm={la:1.12,sb:1.0,oc:1.15,rv:.95};
+  const tm={standard:250,mid:350,premium:500};
+  const cost=Math.round(sqft*tm[tier]*(cm[county]||1));
+  const annual=rent*12;
+  const rate=0.065/12;
+  const pmt=Math.round(cost*(rate*Math.pow(1+rate,term))/(Math.pow(1+rate,term)-1));
+  const cashflow=rent-pmt;
+  const payback=(cost/annual).toFixed(1);
+  document.getElementById('roiBuildCost').textContent='$'+cost.toLocaleString();
+  document.getElementById('roiMonthlyRent').textContent='$'+rent.toLocaleString()+'/mo';
+  document.getElementById('roiAnnualIncome').textContent='$'+annual.toLocaleString()+'/yr';
+  document.getElementById('roiMonthlyPmt').textContent='$'+pmt.toLocaleString()+'/mo';
+  document.getElementById('roiCashflow').textContent='$'+cashflow.toLocaleString();
+  document.getElementById('roiPayback').textContent=payback+' yrs';
+  for(let y=1;y<=5;y++){
+    const cumulative=annual*y;
+    const pctFill=Math.min(95,Math.round((cumulative/cost)*100));
+    document.querySelectorAll('.roi-bar-fill')[y-1].style.width=pctFill+'%';
+    document.getElementById('roiY'+y).textContent='$'+(Math.round(cumulative/1000))+'K';
+  }
+  document.getElementById('roiResult').classList.add('show');
+}
+calcROI();
+</script>
+
+</body>
+</html>
