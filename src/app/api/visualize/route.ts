@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface VisualizeRequest {
+  prompt: string;
+  referenceImage?: string;
+  referenceMediaType?: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt } = body as { prompt: string };
+    const { prompt, referenceImage, referenceMediaType } = body as VisualizeRequest;
 
     if (!prompt) {
       return NextResponse.json(
@@ -21,7 +27,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const fullPrompt = `Professional photorealistic architectural visualization of: ${prompt}. High-quality interior/exterior design rendering, modern style, well-lit, detailed.`;
+    // Build the parts array — include reference image if provided
+    const parts: Record<string, unknown>[] = [];
+
+    if (referenceImage) {
+      // Send the original photo so the model keeps the same angle/perspective
+      parts.push({
+        inlineData: {
+          mimeType: referenceMediaType || 'image/jpeg',
+          data: referenceImage,
+        },
+      });
+      parts.push({
+        text: `Using this photo as reference, generate a remodeled version of this exact space from the same camera angle and perspective. Apply these changes: ${prompt}. Keep the same room layout, dimensions, and viewpoint. Make it photorealistic.`,
+      });
+    } else {
+      parts.push({
+        text: `Generate an image: Professional photorealistic architectural visualization of: ${prompt}. High-quality interior/exterior design rendering, modern style, well-lit, detailed.`,
+      });
+    }
 
     // Nano Banana 2 (Gemini 3.1 Flash Image Preview)
     const response = await fetch(
@@ -30,12 +54,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: `Generate an image: ${fullPrompt}` }],
-            },
-          ],
+          contents: [{ role: 'user', parts }],
           generationConfig: {
             responseModalities: ['TEXT', 'IMAGE'],
             imageConfig: {
@@ -56,17 +75,17 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    const responseParts = data.candidates?.[0]?.content?.parts ?? [];
 
     // Gemini API may return camelCase (inlineData) or snake_case (inline_data)
-    const imagePart = parts.find(
+    const imagePart = responseParts.find(
       (p: Record<string, unknown>) => p.inlineData || p.inline_data
     );
 
     const imageData = imagePart?.inlineData || imagePart?.inline_data;
 
     if (!imageData) {
-      console.error('Nano Banana 2 returned no image. Parts:', JSON.stringify(parts.map((p: Record<string, unknown>) => Object.keys(p))));
+      console.error('Nano Banana 2 returned no image. Parts:', JSON.stringify(responseParts.map((p: Record<string, unknown>) => Object.keys(p))));
       return NextResponse.json(
         { error: 'The AI was unable to generate an image. Please try again.' },
         { status: 500 }

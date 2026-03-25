@@ -227,6 +227,7 @@ const AIVision: React.FC = () => {
   const [generatedImage, setGeneratedImage] = useState<{ data: string; mimeType: string } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [vizError, setVizError] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<{ base64: string; mediaType: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,6 +258,7 @@ const AIVision: React.FC = () => {
           } else {
             setResult(data);
             setError(null);
+            setUploadedImage({ base64, mediaType });
           }
         } catch {
           setError('Failed to connect to the analysis service. Please try again.');
@@ -284,7 +286,11 @@ const AIVision: React.FC = () => {
       const res = await fetch('/api/visualize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          prompt,
+          referenceImage: uploadedImage?.base64,
+          referenceMediaType: uploadedImage?.mediaType,
+        }),
       });
 
       const data = await res.json();
@@ -307,6 +313,7 @@ const AIVision: React.FC = () => {
     setGeneratedImage(null);
     setIsGenerating(false);
     setVizError(null);
+    setUploadedImage(null);
   };
 
   return (
