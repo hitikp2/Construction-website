@@ -380,70 +380,244 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  const handleDownload = useCallback(() => {
+  const [saveImageUrl, setSaveImageUrl] = useState<string | null>(null);
+
+  const handleDownload = useCallback(async () => {
+    const W = 1080;
+    const PAD = 48;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+
+    // Helper to load an image
+    const loadImg = (src: string): Promise<HTMLImageElement> =>
+      new Promise((res, rej) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => res(img);
+        img.onerror = rej;
+        img.src = src;
+      });
+
+    // Helper to wrap text
+    const wrapText = (text: string, maxW: number, font: string): string[] => {
+      ctx.font = font;
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let line = '';
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > maxW && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = test;
+        }
+      }
+      if (line) lines.push(line);
+      return lines;
+    };
+
+    // Pre-calculate height
     const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const contentW = W - PAD * 2;
 
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Remodel Estimate — ${COMPANY.name}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,system-ui,sans-serif;background:#0a0a0a;color:#f0efe9;padding:32px;max-width:800px;margin:0 auto}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid #222}
-.header h1{font-size:20px;font-weight:700}
-.header .date{font-size:12px;color:#888}
-.badge{display:inline-block;background:#c8ff0018;color:#c8ff00;padding:4px 14px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:16px}
-.vision{background:#161616;border:1px solid #222;border-radius:12px;padding:16px;margin-bottom:16px;font-size:14px;color:#a8a8a0;line-height:1.6}
-.vision strong{color:#c8ff00;font-size:11px;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px}
-.desc{font-size:14px;color:#a8a8a0;line-height:1.7;margin-bottom:24px}
-.images{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-.images img{width:100%;border-radius:12px;border:1px solid #222}
-.images .label{font-size:11px;color:#888;text-align:center;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
-table{width:100%;border-collapse:collapse;margin-bottom:24px}
-td{padding:12px 16px;font-size:14px;border-bottom:1px solid #1a1a1a}
-td:last-child{text-align:right;font-family:monospace;color:#a8a8a0}
-.total td{border-top:2px solid #333;border-bottom:none;font-weight:700;font-size:18px}
-.total td:last-child{color:#c8ff00}
-.footer{margin-top:32px;padding-top:16px;border-top:1px solid #222;font-size:12px;color:#555;text-align:center}
-.footer a{color:#c8ff00;text-decoration:none}
-@media print{body{background:#fff;color:#111}td:last-child{color:#333}.total td:last-child{color:#111}.badge{background:#eee;color:#333}.vision{background:#f5f5f5;border-color:#ddd}.header,.footer{border-color:#ddd}}
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>${COMPANY.name}</h1>
-  <span class="date">${date}</span>
-</div>
-<div class="badge">${result.room_type}</div>
-${userVision ? `<div class="vision"><strong>Your Vision</strong>${userVision}</div>` : ''}
-<p class="desc">${result.remodel_description}</p>
-<div class="images">
-  <div><img src="${beforeSrc}" alt="Before"><div class="label">Before</div></div>
-  ${afterSrc ? `<div><img src="${afterSrc}" alt="After — AI Visualization"><div class="label">After — AI</div></div>` : ''}
-</div>
-<table>
-${result.cost_items.map(item => `  <tr><td>${item.item}</td><td>${formatCurrency(item.cost)}</td></tr>`).join('\n')}
-  <tr class="total"><td>Estimated Total</td><td>${formatCurrency(result.total)}</td></tr>
-</table>
-<div class="footer">
-  <p>${COMPANY.name} · ${COMPANY.phone} · <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
-  <p style="margin-top:4px">This is an AI-generated estimate. Contact us for an exact quote.</p>
-</div>
-</body>
-</html>`;
+    // Load images
+    const beforeImg = await loadImg(beforeSrc).catch(() => null);
+    const afterImg = afterSrc ? await loadImg(afterSrc).catch(() => null) : null;
 
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `remodel-estimate-${result.room_type.toLowerCase().replace(/\s+/g, '-')}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Calculate image heights
+    let imgSectionH = 0;
+    let imgAspect = 3 / 4;
+    if (beforeImg) {
+      imgAspect = beforeImg.height / beforeImg.width;
+      if (afterImg) {
+        const halfW = (contentW - 16) / 2;
+        imgSectionH = halfW * imgAspect + 28; // +label
+      } else {
+        imgSectionH = contentW * imgAspect;
+      }
+    }
+
+    // Wrap description text
+    const descLines = wrapText(result.remodel_description, contentW, '15px sans-serif');
+    const visionLines = userVision ? wrapText(userVision, contentW - 32, '14px sans-serif') : [];
+
+    // Calculate total height
+    let h = PAD; // top padding
+    h += 30; // header (company + date)
+    h += 36; // spacing + badge
+    if (userVision) h += 20 + visionLines.length * 20 + 32; // vision block
+    h += 24; // spacing
+    h += imgSectionH + 20; // images + spacing
+    h += descLines.length * 22 + 24; // description
+    h += result.cost_items.length * 44 + 56; // table rows + total
+    h += 60; // footer
+    h += PAD; // bottom padding
+
+    canvas.width = W;
+    canvas.height = h;
+
+    // Background
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, W, h);
+
+    let y = PAD;
+
+    // Header
+    ctx.fillStyle = '#f0efe9';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText(COMPANY.name, PAD, y + 18);
+    ctx.fillStyle = '#555';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(date, W - PAD, y + 18);
+    ctx.textAlign = 'left';
+    y += 30;
+
+    // Divider
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(PAD, y);
+    ctx.lineTo(W - PAD, y);
+    ctx.stroke();
+    y += 20;
+
+    // Badge
+    const badgeText = result.room_type;
+    ctx.font = 'bold 13px sans-serif';
+    const badgeW = ctx.measureText(badgeText).width + 24;
+    ctx.fillStyle = '#c8ff0020';
+    ctx.beginPath();
+    ctx.roundRect(PAD, y, badgeW, 26, 13);
+    ctx.fill();
+    ctx.fillStyle = '#c8ff00';
+    ctx.fillText(badgeText, PAD + 12, y + 17);
+    y += 38;
+
+    // User vision
+    if (userVision && visionLines.length > 0) {
+      const visionH = visionLines.length * 20 + 28;
+      ctx.fillStyle = '#161616';
+      ctx.beginPath();
+      ctx.roundRect(PAD, y, contentW, visionH, 12);
+      ctx.fill();
+      ctx.strokeStyle = '#222';
+      ctx.beginPath();
+      ctx.roundRect(PAD, y, contentW, visionH, 12);
+      ctx.stroke();
+      ctx.fillStyle = '#c8ff00';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('YOUR VISION', PAD + 16, y + 18);
+      ctx.fillStyle = '#a8a8a0';
+      ctx.font = '14px sans-serif';
+      visionLines.forEach((line, i) => {
+        ctx.fillText(line, PAD + 16, y + 36 + i * 20);
+      });
+      y += visionH + 16;
+    }
+
+    // Images
+    if (beforeImg) {
+      if (afterImg) {
+        const halfW = (contentW - 16) / 2;
+        const imgH = halfW * imgAspect;
+
+        // Before
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(PAD, y, halfW, imgH, 12);
+        ctx.clip();
+        ctx.drawImage(beforeImg, PAD, y, halfW, imgH);
+        ctx.restore();
+
+        // After
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(PAD + halfW + 16, y, halfW, imgH, 12);
+        ctx.clip();
+        ctx.drawImage(afterImg, PAD + halfW + 16, y, halfW, imgH);
+        ctx.restore();
+
+        // Labels
+        ctx.fillStyle = '#666';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('BEFORE', PAD + halfW / 2, y + imgH + 16);
+        ctx.fillText('AFTER — AI', PAD + halfW + 16 + halfW / 2, y + imgH + 16);
+        ctx.textAlign = 'left';
+        y += imgH + 28;
+      } else {
+        const imgH = contentW * imgAspect;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(PAD, y, contentW, imgH, 12);
+        ctx.clip();
+        ctx.drawImage(beforeImg, PAD, y, contentW, imgH);
+        ctx.restore();
+        y += imgH;
+      }
+    }
+    y += 20;
+
+    // Description
+    ctx.fillStyle = '#a8a8a0';
+    ctx.font = '15px sans-serif';
+    descLines.forEach((line) => {
+      ctx.fillText(line, PAD, y);
+      y += 22;
+    });
+    y += 12;
+
+    // Cost table
+    result.cost_items.forEach((item) => {
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(PAD, y, contentW, 1);
+      ctx.fillStyle = '#f0efe9';
+      ctx.font = '14px sans-serif';
+      ctx.fillText(item.item, PAD, y + 28);
+      ctx.fillStyle = '#a8a8a0';
+      ctx.font = '14px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(formatCurrency(item.cost), W - PAD, y + 28);
+      ctx.textAlign = 'left';
+      y += 44;
+    });
+
+    // Total row
+    ctx.fillStyle = '#333';
+    ctx.fillRect(PAD, y, contentW, 2);
+    y += 12;
+    ctx.fillStyle = '#f0efe9';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('Estimated Total', PAD, y + 24);
+    ctx.fillStyle = '#c8ff00';
+    ctx.font = 'bold 20px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(formatCurrency(result.total), W - PAD, y + 24);
+    ctx.textAlign = 'left';
+    y += 44;
+
+    // Footer divider
+    ctx.strokeStyle = '#222';
+    ctx.beginPath();
+    ctx.moveTo(PAD, y);
+    ctx.lineTo(W - PAD, y);
+    ctx.stroke();
+    y += 20;
+
+    // Footer
+    ctx.fillStyle = '#555';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${COMPANY.name} · ${COMPANY.phone} · ${COMPANY.email}`, W / 2, y);
+    y += 16;
+    ctx.fillText('AI-generated estimate — contact us for an exact quote', W / 2, y);
+    ctx.textAlign = 'left';
+
+    // Convert to image URL and show overlay
+    const dataUrl = canvas.toDataURL('image/png');
+    setSaveImageUrl(dataUrl);
   }, [result, beforeSrc, afterSrc, userVision]);
 
   if (!open) return null;
@@ -552,6 +726,30 @@ ${result.cost_items.map(item => `  <tr><td>${item.item}</td><td>${formatCurrency
           </p>
         </div>
       </div>
+
+      {/* Save Image Overlay — long-press to save on mobile */}
+      {saveImageUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex flex-col items-center bg-black/95 overflow-y-auto"
+          onClick={() => setSaveImageUrl(null)}
+        >
+          <div className="sticky top-0 w-full flex items-center justify-between px-4 py-3 bg-black/80 backdrop-blur-sm z-10">
+            <p className="text-[#a8a8a0] text-sm font-sans">Hold the image to save</p>
+            <button
+              onClick={() => setSaveImageUrl(null)}
+              className="p-2 rounded-lg text-[#6a6a64] hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <img
+            src={saveImageUrl}
+            alt="Remodel estimate"
+            className="w-full max-w-lg mx-auto"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };
