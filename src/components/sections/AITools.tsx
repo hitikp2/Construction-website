@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Bot, Eye, Send, Upload, RotateCcw, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { SectionHeader } from '../ui/SectionHeader';
@@ -217,6 +217,113 @@ const AIChat: React.FC = () => {
 };
 
 /* ------------------------------------------------------------------ */
+/*  Mini Before/After Slider                                           */
+/* ------------------------------------------------------------------ */
+
+interface MiniSliderProps {
+  beforeSrc: string;
+  afterSrc: string;
+}
+
+const MiniSlider: React.FC<MiniSliderProps> = ({ beforeSrc, afterSrc }) => {
+  const [pct, setPct] = useState(50);
+  const [dragging, setDragging] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  const getPct = useCallback((clientX: number) => {
+    if (!stageRef.current) return 50;
+    const r = stageRef.current.getBoundingClientRect();
+    return Math.max(2, Math.min(98, ((clientX - r.left) / r.width) * 100));
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    setDragging(true);
+    setPct(getPct(e.clientX));
+  }, [getPct]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragging) return;
+    e.preventDefault();
+    setPct(getPct(e.clientX));
+  }, [dragging, getPct]);
+
+  const handlePointerUp = useCallback(() => setDragging(false), []);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-hit]')) return;
+    setPct(getPct(e.clientX));
+  }, [getPct]);
+
+  return (
+    <div
+      ref={stageRef}
+      className="relative rounded-xl overflow-hidden bg-[#0a0a0a] select-none cursor-default border border-white/5"
+      onClick={handleClick}
+      onDragStart={e => e.preventDefault()}
+      tabIndex={0}
+      role="slider"
+      aria-label="Before and after comparison"
+      aria-valuenow={Math.round(pct)}
+      onKeyDown={e => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); setPct(p => Math.max(2, p - 2)); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); setPct(p => Math.min(98, p + 2)); }
+      }}
+    >
+      {/* After layer (AI generated — bottom) */}
+      <img src={afterSrc} alt="AI remodel" className="w-full h-auto block" draggable={false} />
+
+      {/* Before layer (original photo — clipped on top) */}
+      <div
+        className="absolute inset-0 z-[2]"
+        style={{ clipPath: `inset(0 ${100 - pct}% 0 0)` }}
+      >
+        <img src={beforeSrc} alt="Original photo" className="w-full h-full object-cover" draggable={false} />
+      </div>
+
+      {/* Divider line */}
+      <div
+        className="absolute top-0 bottom-0 z-10 w-0.5 -translate-x-1/2 pointer-events-none"
+        style={{ left: `${pct}%` }}
+      >
+        <div className="absolute inset-0 bg-[#c8ff00] rounded-full shadow-[0_0_8px_rgba(200,255,0,0.5),0_0_24px_rgba(200,255,0,0.15)]" />
+      </div>
+
+      {/* Hit zone */}
+      <div
+        data-hit
+        className="absolute top-0 bottom-0 w-14 -translate-x-1/2 z-20 cursor-col-resize touch-none"
+        style={{ left: `${pct}%` }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onLostPointerCapture={handlePointerUp}
+      />
+
+      {/* Knob */}
+      <div
+        className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#c8ff00] z-[21] flex items-center justify-center gap-1.5 pointer-events-none transition-transform duration-150 ${dragging ? 'scale-110 shadow-[0_0_24px_rgba(200,255,0,0.5)]' : 'shadow-[0_0_16px_rgba(200,255,0,0.35),0_4px_12px_rgba(0,0,0,0.5)]'}`}
+        style={{ left: `${pct}%` }}
+      >
+        <div className="w-0 h-0 border-y-[4px] border-y-transparent border-r-[6px] border-r-[#060606]" />
+        <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-[#060606]" />
+      </div>
+
+      {/* Labels */}
+      <div className={`absolute z-[8] top-2 left-2 px-2.5 py-1 rounded-full font-mono text-[0.55rem] font-semibold tracking-[0.1em] uppercase backdrop-blur-[14px] pointer-events-none bg-black/50 text-white/60 border border-white/[0.06] transition-opacity duration-300 ${pct < 10 ? 'opacity-[0.15]' : ''}`}>
+        Before
+      </div>
+      <div className={`absolute z-[8] top-2 right-2 px-2.5 py-1 rounded-full font-mono text-[0.55rem] font-semibold tracking-[0.1em] uppercase backdrop-blur-[14px] pointer-events-none bg-[#c8ff00]/10 text-[#c8ff00] border border-[#c8ff00]/[0.08] transition-opacity duration-300 ${pct > 90 ? 'opacity-[0.15]' : ''}`}>
+        After
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
 /*  AI Remodel Visualizer Panel                                        */
 /* ------------------------------------------------------------------ */
 
@@ -385,17 +492,16 @@ const AIVision: React.FC = () => {
               </div>
             </div>
 
-            {/* Generated image or generate button */}
-            {generatedImage ? (
-              <div className="rounded-xl overflow-hidden border border-white/5">
-                <img
-                  src={`data:${generatedImage.mimeType};base64,${generatedImage.data}`}
-                  alt="AI-generated remodel visualization"
-                  className="w-full h-auto"
+            {/* Generated comparison slider or generate button */}
+            {generatedImage && uploadedImage ? (
+              <div className="space-y-2">
+                <MiniSlider
+                  beforeSrc={`data:${uploadedImage.mediaType};base64,${uploadedImage.base64}`}
+                  afterSrc={`data:${generatedImage.mimeType};base64,${generatedImage.data}`}
                 />
-                <div className="px-3 py-2 bg-white/[0.02] text-center">
-                  <p className="text-[#6a6a64] text-xs font-sans">AI-generated visualization of your remodel</p>
-                </div>
+                <p className="text-[#5a5a54] text-xs text-center font-sans">
+                  <span className="text-[#c8ff00]">&larr;</span> Drag to compare <span className="text-[#c8ff00]">&rarr;</span>
+                </p>
               </div>
             ) : (
               <div className="space-y-2">

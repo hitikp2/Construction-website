@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
           contents: [{ role: 'user', parts }],
           generationConfig: {
             responseModalities: ['TEXT', 'IMAGE'],
-            imageConfig: {
-              aspectRatio: '16:9',
-            },
+            // Only set aspect ratio when no reference image — let the model
+            // match the original photo's proportions when editing
+            ...(referenceImage ? {} : { imageConfig: { aspectRatio: '16:9' } }),
           },
         }),
       }
