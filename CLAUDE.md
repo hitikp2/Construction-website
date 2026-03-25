@@ -4,12 +4,13 @@
 
 ## Scroll Behavior
 - The page must always start at the top (Hero section) on load/reload.
-- `ScrollToTop` component (`src/components/layout/ScrollToTop.tsx`) handles this
-  via `useEffect` → `window.scrollTo(0, 0)` after React hydration.
-- Do NOT use `<head>` scripts for scroll — they fire before the body exists and
-  the browser overrides them during rendering.
-- Do NOT add `autofocus` to any element below the fold (e.g. AI chat input) as
-  browsers will scroll to focused elements.
+- Do NOT use `scrollIntoView()` in any `useEffect` that runs on mount — it
+  scrolls the entire page to that element, not just the container.
+- The AI chat in `AITools.tsx` uses `hasInteracted` ref to skip auto-scroll
+  on initial render. Only scroll the chat after user sends a message.
+- Always use `{ block: 'nearest' }` with `scrollIntoView` to avoid scrolling
+  the page — only scroll the nearest scrollable container.
+- Do NOT add `autofocus` to any element below the fold.
 
 ## Company Data
 - All company info (phone, email, address, license) lives in `src/lib/constants.ts`

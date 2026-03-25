@@ -62,13 +62,17 @@ const AIChat: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasInteracted = useRef(false);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Skip initial render — only auto-scroll after user sends a message
+    if (!hasInteracted.current) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, isLoading]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
+    hasInteracted.current = true;
 
     const userMsg: ChatMessage = { role: 'user', content: text.trim() };
     const updatedMessages = [...messages, userMsg];

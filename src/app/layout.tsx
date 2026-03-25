@@ -3,7 +3,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PhoneCTA } from "@/components/layout/PhoneCTA";
 import { Preloader } from "@/components/layout/Preloader";
-import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -51,7 +50,6 @@ export default function RootLayout({
       className="h-full antialiased"
     >
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-[#f0efe9] font-sans">
-        <ScrollToTop />
         <Preloader />
         <Navbar />
         <main className="flex-1">{children}</main>
