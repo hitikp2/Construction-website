@@ -97,16 +97,16 @@ interface StageProps {
 const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
   const [pct, setPct] = useState(50);
   const [dragging, setDragging] = useState(false);
-  const [touched, setTouched] = useState(false);
-  const [introPlayed, setIntroPlayed] = useState(true);
+  const [fade, setFade] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Reset when project changes
+  // Crossfade on project change and reset slider
   useEffect(() => {
-    setPct(50);
-    setTouched(false);
-    setIntroPlayed(false);
-    const t = setTimeout(() => setIntroPlayed(true), 1800);
+    setFade(true);
+    const t = setTimeout(() => {
+      setPct(50);
+      setFade(false);
+    }, 250);
     return () => clearTimeout(t);
   }, [project]);
 
@@ -121,7 +121,6 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
     e.stopPropagation();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
-    setTouched(true);
     onInteract();
     setPct(getPct(e.clientX));
   }, [getPct, onInteract]);
@@ -138,14 +137,13 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
 
   const handleStageClick = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-hit]')) return;
-    setTouched(true);
     onInteract();
     setPct(getPct(e.clientX));
   }, [getPct, onInteract]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') { e.preventDefault(); setPct(p => Math.max(2, p - 2)); setTouched(true); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); setPct(p => Math.min(98, p + 2)); setTouched(true); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); setPct(p => Math.max(2, p - 2)); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); setPct(p => Math.min(98, p + 2)); }
   }, []);
 
   const posClass = pct < 12 ? 'low' : pct > 88 ? 'high' : '';
@@ -153,7 +151,7 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
   return (
     <div
       ref={stageRef}
-      className="relative aspect-video rounded-[22px] overflow-hidden bg-[#0a0a0a] select-none cursor-default shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_rgba(0,0,0,0.6),0_0_120px_rgba(200,255,0,0.02)] hover:shadow-[0_0_0_1px_rgba(200,255,0,0.06),0_32px_100px_rgba(0,0,0,0.65),0_0_160px_rgba(200,255,0,0.03)] transition-shadow duration-300"
+      className={`relative aspect-video rounded-[22px] overflow-hidden bg-[#0a0a0a] select-none cursor-default shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_rgba(0,0,0,0.6),0_0_120px_rgba(200,255,0,0.02)] hover:shadow-[0_0_0_1px_rgba(200,255,0,0.06),0_32px_100px_rgba(0,0,0,0.65),0_0_160px_rgba(200,255,0,0.03)] transition-all duration-300 ${fade ? 'opacity-0' : 'opacity-100'}`}
       onClick={handleStageClick}
       onKeyDown={handleKeyDown}
       onDragStart={e => e.preventDefault()}
@@ -164,27 +162,23 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
     >
       {/* After layer (bottom) */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-[background-image] duration-500"
+        className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url('${project.after}')` }}
       />
 
       {/* Before layer (top, clipped) */}
       <div
-        className="absolute inset-0 bg-cover bg-center z-[2] transition-[background-image] duration-500"
+        className="absolute inset-0 bg-cover bg-center z-[2]"
         style={{
           backgroundImage: `url('${project.before}')`,
-          clipPath: introPlayed ? `inset(0 ${100 - pct}% 0 0)` : undefined,
-          animation: !introPlayed ? 'baIntroReveal 1.4s cubic-bezier(.16,1,.3,1) .3s forwards' : undefined,
+          clipPath: `inset(0 ${100 - pct}% 0 0)`,
         }}
       />
 
       {/* Divider line */}
       <div
         className="absolute top-0 bottom-0 z-10 w-0.5 -translate-x-1/2 pointer-events-none"
-        style={{
-          left: introPlayed ? `${pct}%` : undefined,
-          animation: !introPlayed ? 'baIntroHandle 1.4s cubic-bezier(.16,1,.3,1) .3s forwards' : undefined,
-        }}
+        style={{ left: `${pct}%` }}
       >
         <div className="absolute inset-0 bg-[#c8ff00] rounded-full shadow-[0_0_8px_rgba(200,255,0,0.5),0_0_24px_rgba(200,255,0,0.15),0_0_64px_rgba(200,255,0,0.06)]" />
         {/* Sparks */}
@@ -197,10 +191,7 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
       <div
         data-hit
         className="absolute top-0 bottom-0 w-14 -translate-x-1/2 z-20 cursor-col-resize touch-none"
-        style={{
-          left: introPlayed ? `${pct}%` : undefined,
-          animation: !introPlayed ? 'baIntroHandle 1.4s cubic-bezier(.16,1,.3,1) .3s forwards' : undefined,
-        }}
+        style={{ left: `${pct}%` }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -210,11 +201,8 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
 
       {/* Knob */}
       <div
-        className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-[54px] h-[54px] md:w-[54px] md:h-[54px] max-sm:w-11 max-sm:h-11 rounded-full bg-[#c8ff00] z-[21] flex items-center justify-center gap-2 pointer-events-none transition-transform duration-150 ${dragging ? 'scale-115 shadow-[0_0_40px_rgba(200,255,0,0.5),0_8px_32px_rgba(0,0,0,0.6)]' : 'shadow-[0_0_24px_rgba(200,255,0,0.35),0_6px_20px_rgba(0,0,0,0.5)]'}`}
-        style={{
-          left: introPlayed ? `${pct}%` : undefined,
-          animation: !introPlayed ? 'baIntroHandle 1.4s cubic-bezier(.16,1,.3,1) .3s forwards' : undefined,
-        }}
+        className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-[54px] h-[54px] max-sm:w-11 max-sm:h-11 rounded-full bg-[#c8ff00] z-[21] flex items-center justify-center gap-2 pointer-events-none transition-transform duration-150 ${dragging ? 'scale-115 shadow-[0_0_40px_rgba(200,255,0,0.5),0_8px_32px_rgba(0,0,0,0.6)]' : 'shadow-[0_0_24px_rgba(200,255,0,0.35),0_6px_20px_rgba(0,0,0,0.5)]'}`}
+        style={{ left: `${pct}%` }}
       >
         <div className="w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-[#060606]" />
         <div className="w-0 h-0 border-y-[6px] border-y-transparent border-l-[8px] border-l-[#060606]" />
@@ -244,13 +232,6 @@ const Stage: React.FC<StageProps> = ({ project, onInteract }) => {
         className={`absolute z-[8] top-5 right-5 px-4 py-1.5 rounded-full font-mono text-[0.62rem] font-semibold tracking-[0.14em] uppercase backdrop-blur-[14px] pointer-events-none bg-[#c8ff00]/10 text-[#c8ff00] border border-[#c8ff00]/[0.08] transition-opacity duration-300 ${posClass === 'high' ? 'opacity-[0.15]' : ''}`}
       >
         After
-      </div>
-
-      {/* Drag tooltip */}
-      <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 px-6 py-2.5 bg-black/70 backdrop-blur-2xl border border-[#c8ff00]/[0.08] rounded-full text-sm font-medium text-[#a8a8a0] pointer-events-none whitespace-nowrap transition-opacity duration-500 ${touched ? 'opacity-0' : 'opacity-100'}`}
-      >
-        <span className="text-[#c8ff00] font-bold">&larr;</span> Drag to reveal <span className="text-[#c8ff00] font-bold">&rarr;</span>
       </div>
 
       {/* Project info overlay */}
@@ -329,17 +310,15 @@ const BeforeAfter: React.FC = () => {
 
         <div className="max-w-[1100px] mx-auto">
           {/* Stage */}
-          <motion.div
-            key={current}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Stage project={project} onInteract={handleInteract} />
-          </motion.div>
+          <Stage project={project} onInteract={handleInteract} />
+
+          {/* Drag hint */}
+          <p className="text-center text-sm text-[#5a5a54] mt-3 font-sans">
+            <span className="text-[#c8ff00] font-bold">&larr;</span> Drag the slider to reveal the transformation <span className="text-[#c8ff00] font-bold">&rarr;</span>
+          </p>
 
           {/* Thumbnails */}
-          <div className="flex gap-3 mt-5 justify-center flex-wrap">
+          <div className="flex gap-3 mt-4 justify-center flex-wrap">
             {projects.map((p, i) => (
               <button
                 key={i}
