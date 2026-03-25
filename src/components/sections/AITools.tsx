@@ -226,9 +226,23 @@ interface MiniSliderProps {
 }
 
 const MiniSlider: React.FC<MiniSliderProps> = ({ beforeSrc, afterSrc }) => {
-  const [pct, setPct] = useState(50);
-  const [dragging, setDragging] = useState(false);
+  const pctRef = useRef(50);
+  const draggingRef = useRef(false);
   const stageRef = useRef<HTMLDivElement>(null);
+  const beforeClipRef = useRef<HTMLDivElement>(null);
+  const dividerRef = useRef<HTMLDivElement>(null);
+  const knobRef = useRef<HTMLDivElement>(null);
+  const hitRef = useRef<HTMLDivElement>(null);
+
+  const render = useCallback((p: number) => {
+    p = Math.max(2, Math.min(98, p));
+    pctRef.current = p;
+    const v = `${p}%`;
+    if (beforeClipRef.current) beforeClipRef.current.style.clipPath = `inset(0 ${100 - p}% 0 0)`;
+    if (dividerRef.current) dividerRef.current.style.left = v;
+    if (knobRef.current) knobRef.current.style.left = v;
+    if (hitRef.current) hitRef.current.style.left = v;
+  }, []);
 
   const getPct = useCallback((clientX: number) => {
     if (!stageRef.current) return 50;
@@ -240,22 +254,26 @@ const MiniSlider: React.FC<MiniSliderProps> = ({ beforeSrc, afterSrc }) => {
     e.preventDefault();
     e.stopPropagation();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    setDragging(true);
-    setPct(getPct(e.clientX));
-  }, [getPct]);
+    draggingRef.current = true;
+    knobRef.current?.classList.add('scale-110');
+    render(getPct(e.clientX));
+  }, [getPct, render]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging) return;
+    if (!draggingRef.current) return;
     e.preventDefault();
-    setPct(getPct(e.clientX));
-  }, [dragging, getPct]);
+    render(getPct(e.clientX));
+  }, [getPct, render]);
 
-  const handlePointerUp = useCallback(() => setDragging(false), []);
+  const handlePointerUp = useCallback(() => {
+    draggingRef.current = false;
+    knobRef.current?.classList.remove('scale-110');
+  }, []);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-hit]')) return;
-    setPct(getPct(e.clientX));
-  }, [getPct]);
+    render(getPct(e.clientX));
+  }, [getPct, render]);
 
   return (
     <div
@@ -266,10 +284,9 @@ const MiniSlider: React.FC<MiniSliderProps> = ({ beforeSrc, afterSrc }) => {
       tabIndex={0}
       role="slider"
       aria-label="Before and after comparison"
-      aria-valuenow={Math.round(pct)}
       onKeyDown={e => {
-        if (e.key === 'ArrowLeft') { e.preventDefault(); setPct(p => Math.max(2, p - 2)); }
-        if (e.key === 'ArrowRight') { e.preventDefault(); setPct(p => Math.min(98, p + 2)); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); render(pctRef.current - 2); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); render(pctRef.current + 2); }
       }}
     >
       {/* After layer (AI generated — bottom) */}
@@ -277,25 +294,27 @@ const MiniSlider: React.FC<MiniSliderProps> = ({ beforeSrc, afterSrc }) => {
 
       {/* Before layer (original photo — clipped on top) */}
       <div
-        className="absolute inset-0 z-[2]"
-        style={{ clipPath: `inset(0 ${100 - pct}% 0 0)` }}
+        ref={beforeClipRef}
+        className="absolute inset-0 z-[2] will-change-[clip-path]"
+        style={{ clipPath: 'inset(0 50% 0 0)' }}
       >
         <img src={beforeSrc} alt="Original photo" className="w-full h-full object-cover" draggable={false} />
       </div>
 
       {/* Divider line */}
       <div
-        className="absolute top-0 bottom-0 z-10 w-0.5 -translate-x-1/2 pointer-events-none"
-        style={{ left: `${pct}%` }}
+        ref={dividerRef}
+        className="absolute top-0 bottom-0 z-10 w-0.5 -translate-x-1/2 pointer-events-none will-change-[left]"
+        style={{ left: '50%' }}
       >
         <div className="absolute inset-0 bg-[#c8ff00] rounded-full shadow-[0_0_8px_rgba(200,255,0,0.5),0_0_24px_rgba(200,255,0,0.15)]" />
       </div>
 
-      {/* Hit zone */}
+      {/* Hit zone — full width so drag works everywhere */}
       <div
         data-hit
-        className="absolute top-0 bottom-0 w-14 -translate-x-1/2 z-20 cursor-col-resize touch-none"
-        style={{ left: `${pct}%` }}
+        ref={hitRef}
+        className="absolute inset-0 z-20 cursor-col-resize touch-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -305,18 +324,19 @@ const MiniSlider: React.FC<MiniSliderProps> = ({ beforeSrc, afterSrc }) => {
 
       {/* Knob */}
       <div
-        className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#c8ff00] z-[21] flex items-center justify-center gap-1.5 pointer-events-none transition-transform duration-150 ${dragging ? 'scale-110 shadow-[0_0_24px_rgba(200,255,0,0.5)]' : 'shadow-[0_0_16px_rgba(200,255,0,0.35),0_4px_12px_rgba(0,0,0,0.5)]'}`}
-        style={{ left: `${pct}%` }}
+        ref={knobRef}
+        className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#c8ff00] z-[21] flex items-center justify-center gap-1.5 pointer-events-none transition-transform duration-150 shadow-[0_0_16px_rgba(200,255,0,0.35),0_4px_12px_rgba(0,0,0,0.5)] will-change-[left]"
+        style={{ left: '50%' }}
       >
         <div className="w-0 h-0 border-y-[4px] border-y-transparent border-r-[6px] border-r-[#060606]" />
         <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-[#060606]" />
       </div>
 
       {/* Labels */}
-      <div className={`absolute z-[8] top-2 left-2 px-2.5 py-1 rounded-full font-mono text-[0.55rem] font-semibold tracking-[0.1em] uppercase backdrop-blur-[14px] pointer-events-none bg-black/50 text-white/60 border border-white/[0.06] transition-opacity duration-300 ${pct < 10 ? 'opacity-[0.15]' : ''}`}>
+      <div className="absolute z-[8] top-2 left-2 px-2.5 py-1 rounded-full font-mono text-[0.55rem] font-semibold tracking-[0.1em] uppercase backdrop-blur-[14px] pointer-events-none bg-black/50 text-white/60 border border-white/[0.06]">
         Before
       </div>
-      <div className={`absolute z-[8] top-2 right-2 px-2.5 py-1 rounded-full font-mono text-[0.55rem] font-semibold tracking-[0.1em] uppercase backdrop-blur-[14px] pointer-events-none bg-[#c8ff00]/10 text-[#c8ff00] border border-[#c8ff00]/[0.08] transition-opacity duration-300 ${pct > 90 ? 'opacity-[0.15]' : ''}`}>
+      <div className="absolute z-[8] top-2 right-2 px-2.5 py-1 rounded-full font-mono text-[0.55rem] font-semibold tracking-[0.1em] uppercase backdrop-blur-[14px] pointer-events-none bg-[#c8ff00]/10 text-[#c8ff00] border border-[#c8ff00]/[0.08]">
         After
       </div>
     </div>
