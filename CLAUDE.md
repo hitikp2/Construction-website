@@ -27,6 +27,9 @@
   (`service.startingPrice`).
 
 ## AI Features
-- Chat and Vision APIs return 503 when `ANTHROPIC_API_KEY` is not set.
+- All AI features use **Google Gemini 2.5 Flash** (`gemini-2.5-flash`) exclusively.
+  Do NOT use Gemini 2.0, Gemini Flash Exp, or any Anthropic/Claude models.
+- Chat, Vision, and Visualize APIs return 503 when `GEMINI_API_KEY` is not set.
 - No demo/mock data — all AI responses come from the live API only.
 - Error states in AITools show helpful fallback CTAs (calculator, contact form).
+- Image generation uses `responseModalities: ['TEXT', 'IMAGE']` on Gemini 2.5 Flash.
