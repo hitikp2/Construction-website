@@ -49,6 +49,13 @@ export default function RootLayout({
       lang="en"
       className="h-full antialiased"
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if(location.hash){history.replaceState(null,"",location.pathname)}`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-[#f0efe9] font-sans">
         <Preloader />
         <Navbar />
