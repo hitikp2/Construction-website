@@ -62,7 +62,7 @@ const TrustBar: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <SectionHeader
           label="Why Choose Us"
-          title="Proven Track Record. Zero Surprises."
+          title={<>Proven Track Record.<br /><span className="text-[#c8ff00]">Zero Surprises.</span></>}
           subtitle="Every number below is backed by real projects, real clients, and verifiable records."
         />
 

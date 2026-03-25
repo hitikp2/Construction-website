@@ -32,7 +32,7 @@ const Services: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <SectionHeader
           label="What We Do"
-          title="Full-Service Construction & Remodeling"
+          title={<>Full-Service <span className="text-[#c8ff00]">Construction</span> &amp; Remodeling</>}
           subtitle="Published pricing. No hidden fees. Every quote is all-inclusive — if the scope doesn't change, neither does the price."
         />
 
