@@ -23,17 +23,24 @@ export async function POST(request: NextRequest) {
 
     const fullPrompt = `Professional photorealistic architectural visualization of: ${prompt}. High-quality interior/exterior design rendering, modern style, well-lit, detailed.`;
 
-    // Google Imagen 3 via Google AI Studio (generateImages endpoint)
+    // Nano Banana 2 (Gemini 3.1 Flash Image Preview)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: fullPrompt,
-          config: {
-            numberOfImages: 1,
-            aspectRatio: '16:9',
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `Generate an image: ${fullPrompt}` }],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ['TEXT', 'IMAGE'],
+            imageConfig: {
+              aspectRatio: '16:9',
+            },
           },
         }),
       }
@@ -41,20 +48,22 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(`Imagen 3 generateImages failed (${response.status}):`, errText);
+      console.error(`Nano Banana 2 API error (${response.status}):`, errText);
       return NextResponse.json(
-        { error: `Image generation failed (${response.status}). Check Railway deploy logs for details.` },
+        { error: `Image generation failed (${response.status}). Check deploy logs for details.` },
         { status: 500 }
       );
     }
 
     const data = await response.json();
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
 
-    // Response format: { generatedImages: [{ image: { imageBytes: "base64..." } }] }
-    const imageBytes = data.generatedImages?.[0]?.image?.imageBytes;
+    const imagePart = parts.find(
+      (p: { inline_data?: { mime_type: string; data: string } }) => p.inline_data
+    );
 
-    if (!imageBytes) {
-      console.error('Imagen 3 returned no image. Response:', JSON.stringify(data).slice(0, 500));
+    if (!imagePart?.inline_data) {
+      console.error('Nano Banana 2 returned no image. Parts:', JSON.stringify(parts.map((p: Record<string, unknown>) => Object.keys(p))));
       return NextResponse.json(
         { error: 'The AI was unable to generate an image. Please try again.' },
         { status: 500 }
@@ -62,8 +71,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      image: imageBytes,
-      mimeType: 'image/png',
+      image: imagePart.inline_data.data,
+      mimeType: imagePart.inline_data.mime_type,
     });
   } catch (error) {
     console.error('Visualize API error:', error);

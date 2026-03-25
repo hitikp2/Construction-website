@@ -32,6 +32,6 @@
 - Chat, Vision, and Visualize APIs return 503 when `GEMINI_API_KEY` is not set.
 - No demo/mock data — all AI responses come from the live API only.
 - Error states in AITools show helpful fallback CTAs (calculator, contact form).
-- Image generation uses **Google Imagen 3** (`imagen-3.0-generate-002`) via the
-  `:predict` endpoint. Uses the same `GEMINI_API_KEY`. Do NOT use Gemini's
-  `responseModalities` for image generation — always use Imagen.
+- Image generation uses **Google Nano Banana 2** (`gemini-3.1-flash-image-preview`)
+  via the `generateContent` endpoint with `responseModalities: ['TEXT', 'IMAGE']`.
+  Uses the same `GEMINI_API_KEY`. Do NOT use older Imagen models.
