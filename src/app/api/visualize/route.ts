@@ -50,6 +50,8 @@ STRICT RULES — you MUST follow all of these:
 - ONLY modify the specific surfaces, materials, fixtures, plants, or finishes that the remodel description calls for.
 - The result must look like a realistic renovation of THIS SPECIFIC space — not a reimagined space.
 - Maintain the same lighting conditions, time of day, and shadows as the original photo.
+- CRITICAL: All new elements MUST be realistically proportioned relative to the existing space. Use the existing structures (walls, fences, doors, windows) as scale references. A BBQ grill should be ~3ft wide, a pool should match the actual yard dimensions, furniture should be human-scale. Do NOT make objects oversized or undersized — they must look like they physically fit in the real space.
+- New additions must respect the available square footage. Do NOT cram large features into small spaces or make items overlap unnaturally.
 - The output image must be photorealistic and indistinguishable from a real photograph.`,
       });
     } else {
