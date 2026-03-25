@@ -615,6 +615,18 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
     ctx.fillText('AI-generated estimate — contact us for an exact quote', W / 2, y);
     ctx.textAlign = 'left';
 
+    // Watermark — diagonal across the image
+    ctx.save();
+    ctx.translate(W / 2, h / 2);
+    ctx.rotate(-Math.PI / 6);
+    ctx.fillStyle = 'rgba(200, 255, 0, 0.04)';
+    ctx.font = 'bold 72px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(COMPANY.name, 0, 0);
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText(COMPANY.phone, 0, 50);
+    ctx.restore();
+
     // Convert to image URL and show overlay
     const dataUrl = canvas.toDataURL('image/png');
     setSaveImageUrl(dataUrl);
@@ -727,27 +739,56 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
         </div>
       </div>
 
-      {/* Save Image Overlay — long-press to save on mobile */}
+      {/* Save Image Popup */}
       {saveImageUrl && (
         <div
-          className="fixed inset-0 z-[60] flex flex-col items-center bg-black/95 overflow-y-auto"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
           onClick={() => setSaveImageUrl(null)}
         >
-          <div className="sticky top-0 w-full flex items-center justify-between px-4 py-3 bg-black/80 backdrop-blur-sm z-10">
-            <p className="text-[#a8a8a0] text-sm font-sans">Hold the image to save</p>
-            <button
-              onClick={() => setSaveImageUrl(null)}
-              className="p-2 rounded-lg text-[#6a6a64] hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <img
-            src={saveImageUrl}
-            alt="Remodel estimate"
-            className="w-full max-w-lg mx-auto"
+          <div
+            className="relative w-full max-w-md bg-[#0e0e0e] border border-white/10 rounded-2xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.9)]"
             onClick={(e) => e.stopPropagation()}
-          />
+          >
+            {/* Popup header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+              <p className="text-[#f0efe9] text-sm font-semibold font-sans">Your Estimate is Ready</p>
+              <button
+                onClick={() => setSaveImageUrl(null)}
+                className="p-1.5 rounded-lg text-[#6a6a64] hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Instructions */}
+            <div className="px-4 py-3 bg-[#c8ff00]/5 border-b border-[#c8ff00]/10">
+              <p className="text-[#c8ff00] text-xs font-semibold font-sans mb-1">How to save:</p>
+              <p className="text-[#a8a8a0] text-xs font-sans leading-relaxed">
+                <strong className="text-[#f0efe9]">iPhone/iPad:</strong> Press and hold the image → tap &quot;Add to Photos&quot;<br />
+                <strong className="text-[#f0efe9]">Android:</strong> Press and hold → tap &quot;Download image&quot;<br />
+                <strong className="text-[#f0efe9]">Desktop:</strong> Right-click → &quot;Save image as...&quot;
+              </p>
+            </div>
+
+            {/* Scrollable image */}
+            <div className="max-h-[60vh] overflow-y-auto no-scrollbar">
+              <img
+                src={saveImageUrl}
+                alt="Remodel estimate — hold to save"
+                className="w-full h-auto"
+              />
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-white/5 flex gap-2">
+              <button
+                onClick={() => setSaveImageUrl(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 text-[#a8a8a0] text-sm font-semibold font-sans hover:bg-white/10 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
