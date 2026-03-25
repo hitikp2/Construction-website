@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -29,24 +29,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages,
-      }),
-    });
+    // Convert messages to Gemini format (user/model roles, parts array)
+    const geminiContents = messages.map((msg) => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }],
+    }));
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: geminiContents,
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Anthropic API error:', errorData);
+      console.error('Gemini API error:', errorData);
       return NextResponse.json(
         { error: 'Failed to get a response from the AI assistant.' },
         { status: 500 }
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     const assistantMessage =
-      data.content?.[0]?.text ?? 'Sorry, I could not generate a response.';
+      data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sorry, I could not generate a response.';
 
     return NextResponse.json({ message: assistantMessage });
   } catch (error) {

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 interface VisionRequest {
   image: string;
-  mimeType: string;
+  mediaType?: string;
+  mimeType?: string;
 }
 
 interface CostItem {
@@ -20,17 +21,14 @@ interface VisionResult {
 const ANALYSIS_PROMPT = `Analyze this room photo and provide a remodel estimate. Return ONLY valid JSON with this exact structure: {"room_type": "string", "remodel_description": "string describing suggested remodel", "cost_items": [{"item": "string", "cost": number}], "total": number}. Be realistic with Southern California 2026 pricing.`;
 
 function extractJSON(text: string): VisionResult {
-  // Try parsing raw text first
   try {
     return JSON.parse(text);
   } catch {
-    // Try extracting from markdown code block
     const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (codeBlockMatch?.[1]) {
       return JSON.parse(codeBlockMatch[1].trim());
     }
 
-    // Try finding JSON object in text
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch?.[0]) {
       return JSON.parse(jsonMatch[0]);
@@ -43,7 +41,7 @@ function extractJSON(text: string): VisionResult {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { image, mimeType } = body as VisionRequest;
+    const { image, mediaType, mimeType } = body as VisionRequest;
 
     if (!image) {
       return NextResponse.json(
@@ -52,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -61,41 +59,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: mimeType || 'image/jpeg',
-                  data: image,
+    const resolvedMime = mediaType || mimeType || 'image/jpeg';
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  inline_data: {
+                    mime_type: resolvedMime,
+                    data: image,
+                  },
                 },
-              },
-              {
-                type: 'text',
-                text: ANALYSIS_PROMPT,
-              },
-            ],
-          },
-        ],
-      }),
-    });
+                { text: ANALYSIS_PROMPT },
+              ],
+            },
+          ],
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Anthropic Vision API error:', errorData);
+      console.error('Gemini Vision API error:', errorData);
       return NextResponse.json(
         { error: 'Failed to analyze the image.' },
         { status: 500 }
@@ -103,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const responseText = data.content?.[0]?.text ?? '';
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 
     const result = extractJSON(responseText);
 
