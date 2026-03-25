@@ -226,6 +226,7 @@ const AIVision: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<{ data: string; mimeType: string } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [vizError, setVizError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -276,6 +277,7 @@ const AIVision: React.FC = () => {
   const handleGenerateImage = async () => {
     if (!result) return;
     setIsGenerating(true);
+    setVizError(null);
 
     try {
       const prompt = `${result.room_type} remodel: ${result.remodel_description}. Items: ${result.cost_items.map(c => c.item).join(', ')}.`;
@@ -288,12 +290,12 @@ const AIVision: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to generate visualization.');
+        setVizError(data.error || 'Failed to generate visualization.');
       } else {
         setGeneratedImage({ data: data.image, mimeType: data.mimeType });
       }
     } catch {
-      setError('Failed to connect to the image generation service.');
+      setVizError('Failed to connect to the image generation service.');
     } finally {
       setIsGenerating(false);
     }
@@ -304,6 +306,7 @@ const AIVision: React.FC = () => {
     setError(null);
     setGeneratedImage(null);
     setIsGenerating(false);
+    setVizError(null);
   };
 
   return (
@@ -388,23 +391,28 @@ const AIVision: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <button
-                onClick={handleGenerateImage}
-                disabled={isGenerating}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#c8ff00]/10 border border-[#c8ff00]/20 text-[#c8ff00] text-sm font-semibold font-sans hover:bg-[#c8ff00]/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating visualization...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Visualize This Remodel
-                  </>
+              <div className="space-y-2">
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={isGenerating}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#c8ff00]/10 border border-[#c8ff00]/20 text-[#c8ff00] text-sm font-semibold font-sans hover:bg-[#c8ff00]/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating visualization...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      {vizError ? 'Try Again' : 'Visualize This Remodel'}
+                    </>
+                  )}
+                </button>
+                {vizError && (
+                  <p className="text-red-400/80 text-xs text-center font-sans">{vizError}</p>
                 )}
-              </button>
+              </div>
             )}
 
             <div className="flex flex-col gap-3 mt-2">

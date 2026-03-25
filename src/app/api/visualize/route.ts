@@ -21,7 +21,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(
+    const fullPrompt = `Professional photorealistic architectural visualization of: ${prompt}. High-quality interior/exterior design rendering, modern style, well-lit, detailed.`;
+
+    // Try Imagen 3 first (dedicated image generation model)
+    const imagenResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt: fullPrompt }],
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: '16:9',
+          },
+        }),
+      }
+    );
+
+    if (imagenResponse.ok) {
+      const imagenData = await imagenResponse.json();
+      const imageBytes =
+        imagenData.predictions?.[0]?.bytesBase64Encoded;
+
+      if (imageBytes) {
+        return NextResponse.json({
+          image: imageBytes,
+          mimeType: 'image/png',
+        });
+      }
+    }
+
+    // Fallback: try Gemini native image generation
+    const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
       {
         method: 'POST',
@@ -30,11 +62,7 @@ export async function POST(request: NextRequest) {
           contents: [
             {
               role: 'user',
-              parts: [
-                {
-                  text: `Generate a high-quality, photorealistic interior/exterior design rendering of the following remodel concept. Make it look like a professional architectural visualization:\n\n${prompt}`,
-                },
-              ],
+              parts: [{ text: `Generate an image: ${fullPrompt}` }],
             },
           ],
           generationConfig: {
@@ -44,34 +72,31 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Gemini image generation error:', errorData);
-      return NextResponse.json(
-        { error: 'Failed to generate the visualization.' },
-        { status: 500 }
+    if (geminiResponse.ok) {
+      const geminiData = await geminiResponse.json();
+      const parts = geminiData.candidates?.[0]?.content?.parts ?? [];
+      const imagePart = parts.find(
+        (p: { inline_data?: { mime_type: string; data: string } }) =>
+          p.inline_data
       );
+
+      if (imagePart?.inline_data) {
+        return NextResponse.json({
+          image: imagePart.inline_data.data,
+          mimeType: imagePart.inline_data.mime_type,
+        });
+      }
     }
 
-    const data = await response.json();
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    // Both approaches failed — log for debugging
+    const imagenErr = imagenResponse.ok ? null : await imagenResponse.text().catch(() => 'unknown');
+    const geminiErr = geminiResponse.ok ? null : await geminiResponse.text().catch(() => 'unknown');
+    console.error('Image generation failed. Imagen:', imagenErr, 'Gemini:', geminiErr);
 
-    // Find the image part in the response
-    const imagePart = parts.find(
-      (p: { inline_data?: { mime_type: string; data: string } }) => p.inline_data
+    return NextResponse.json(
+      { error: 'Unable to generate a visualization right now. Please try again later.' },
+      { status: 500 }
     );
-
-    if (!imagePart?.inline_data) {
-      return NextResponse.json(
-        { error: 'The AI was unable to generate an image. Please try again.' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      image: imagePart.inline_data.data,
-      mimeType: imagePart.inline_data.mime_type,
-    });
   } catch (error) {
     console.error('Visualize API error:', error);
     return NextResponse.json(
